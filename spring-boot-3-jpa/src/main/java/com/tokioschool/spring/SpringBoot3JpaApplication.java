@@ -43,7 +43,16 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		
 		log.info("Result find all");
 		personRepository.findAll().forEach(p -> log.info(p.toString()) );
-
+		
+		log.info("Person know Java");
+		personRepository.findByProgramingLanguage("Java").forEach(p -> log.info(p.toString()) );
+		
+		log.info("Person know Java and name Tadeo");
+		personRepository.searchByProgramingLanguageAndName("Java","Tadeo").forEach(p -> log.info(p.toString()) );
+		
+		log.info("Person like name 'A' ");
+		personRepository.searchLikeName("a").forEach(p -> log.info(p.toString()) );		
+		
 	}
 
 }
