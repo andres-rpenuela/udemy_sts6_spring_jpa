@@ -2,6 +2,8 @@ package com.tokioschool.spring;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -9,6 +11,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.github.javafaker.Faker;
 import com.tokioschool.spring.entity.Person;
@@ -70,6 +73,37 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		
 		log.info("Obtain person data like name (based query method): ");
 		personRepository.findByNameContains("Andres").ifPresent(System.out::println);
+		
+		/*** ***/
+		createdPerson();
+		/** exmaple transacion **/
+		Person p =  creatredDinamiPerson();
+		finfindPersonById(p.getId()).ifPresent(System.out::println);
 	}
 
+	private Person createdPerson() {
+		Person person = Person.builder().name("Margie").lastname("Simpson").programingLanguage("Java").build();
+		return personRepository.save(person);
+	}
+	
+	@Transactional
+	private Person creatredDinamiPerson() {
+		Scanner sc = new Scanner(System.in);
+		System.out.print("Inserte name: ");
+		String name = sc.nextLine();
+		
+		System.out.print("Inserte lastanme: ");
+		String lastName = sc.nextLine();
+		
+		System.out.print("Inserte programing langauge: ");
+		String programingLanguage = sc.nextLine();
+		
+		Person person = Person.builder().name(name).lastname(lastName).programingLanguage(programingLanguage).build();
+		return personRepository.save(person);
+	}
+	
+	@Transactional(readOnly = true)
+	private Optional<Person> finfindPersonById(Long id){
+		return personRepository.findById(id);
+	}
 }
