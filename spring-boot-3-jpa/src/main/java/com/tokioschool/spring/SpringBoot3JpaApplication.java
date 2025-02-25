@@ -62,6 +62,14 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		log.info("Obtain person data by id: ");
 		personRepository.findById(1L).ifPresent(System.out::println);
 		
+		log.info("Obtain person data by name (custom): ");
+		personRepository.findOneName("Andres").ifPresent(System.out::println);
+		
+		log.info("Obtain person data like name (based query): ");
+		personRepository.findLikeName("Andres").ifPresent(System.out::println);
+		
+		log.info("Obtain person data like name (based query method): ");
+		personRepository.findByNameContains("Andres").ifPresent(System.out::println);
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.tokioschool.spring.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -36,6 +37,16 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 
 	@Query("select p.name, p.programingLanguage from Person p where p.programingLanguage = ?1")
 	public List<Object[]> obtainedPersonDataByPromaingLanguage(String programingLanguage);
+	
+	// obtain a maybe element by query custom
+	@Query("select p from Person p where p.name = ?1 ")
+	public Optional<Person> findOneName(String name);
+	
+		// basado en query
+	@Query("select p from Person p where p.name like %?1% ")
+	public Optional<Person> findLikeName(String name);
+		// basado en nombre metodo
+	public Optional<Person> findByNameContains(String name);
 	
 	
 	
