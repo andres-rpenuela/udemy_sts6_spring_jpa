@@ -59,6 +59,9 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		log.info("Obtain person data by name: ");
 		personRepository.obtainedPersonData("Tadeo").forEach(personData -> System.out.println(personData[0]+", programing: "+personData[1] ) );	
 		
+		log.info("Obtain person data by id: ");
+		personRepository.findById(1L).ifPresent(System.out::println);
+		
 	}
 
 }
