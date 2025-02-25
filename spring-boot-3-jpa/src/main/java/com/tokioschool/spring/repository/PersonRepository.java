@@ -24,5 +24,20 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	@Query("select p from Person p where UPPER(p.name) like CONCAT('%', UPPER(:name), '%')")
 	List<Person> searchLikeName(@Param("name") String namePerson);
 	
+	// obtain properties of person
+	@Query("select p.name, p.programingLanguage from Person p")
+	public List<Object[]> obtainedPersonData();
+	
+	@Query("select p.name, p.programingLanguage from Person p where p.name = ?1")
+	public List<Object[]> obtainedPersonData(String name);
+	
+	@Query("select p.name, p.programingLanguage from Person p where p.name = ?1 and p.programingLanguage = ?1")
+	public List<Object[]> obtainedPersonData(String name, String programingLanguage);
+
+	@Query("select p.name, p.programingLanguage from Person p where p.programingLanguage = ?1")
+	public List<Object[]> obtainedPersonDataByPromaingLanguage(String programingLanguage);
+	
+	
+	
 
 }

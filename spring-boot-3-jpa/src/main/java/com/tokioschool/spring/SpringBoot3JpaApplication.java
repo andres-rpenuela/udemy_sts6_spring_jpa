@@ -51,7 +51,13 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		personRepository.searchByProgramingLanguageAndName("Java","Tadeo").forEach(p -> log.info(p.toString()) );
 		
 		log.info("Person like name 'A' ");
-		personRepository.searchLikeName("a").forEach(p -> log.info(p.toString()) );		
+		personRepository.searchLikeName("a").forEach(p -> log.info(p.toString()) );
+		
+		log.info("Obtain person data: ");
+		personRepository.obtainedPersonData().forEach(personData -> System.out.println(personData[0]+", programing: "+personData[1] ) );
+		
+		log.info("Obtain person data by name: ");
+		personRepository.obtainedPersonData("Tadeo").forEach(personData -> System.out.println(personData[0]+", programing: "+personData[1] ) );	
 		
 	}
 
