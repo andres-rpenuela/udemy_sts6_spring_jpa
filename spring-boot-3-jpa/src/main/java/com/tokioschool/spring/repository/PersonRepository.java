@@ -49,6 +49,15 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	public Optional<Person> findByNameContains(String name);
 	
 	
+	// obtenre campos personalizados
+	@Query("select p.name from Person p where p.id =?1")
+	public String getNameById(Long id);
 	
+	@Query("select concat(p.name,' ',p.lastname) from Person p where p.id =?1")
+	public String getFullNameById(Long id);
+	
+	
+	@Query("select p.name,p.lastname from Person p where p.id =?1")
+	public Object[][] getFieldsById(Long id);
 
 }

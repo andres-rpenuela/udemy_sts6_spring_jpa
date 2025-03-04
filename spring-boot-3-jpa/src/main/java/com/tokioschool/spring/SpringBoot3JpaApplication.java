@@ -1,5 +1,6 @@
 package com.tokioschool.spring;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -87,7 +88,17 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//update();
 		
 		/** example of remove delete **/
-		delete();
+		//delete();
+		
+		/** example fields custom of queries part 1 **/
+		System.out.println("Nombre with id 1: "+personRepository.getNameById(1L));
+		System.out.println("Nombre with id 11: "+personRepository.getNameById(11L)); // es nulo porque no existe
+		
+		System.out.println("Full Nombre with id 1: "+personRepository.getFullNameById(1L));
+		System.out.println("Full Nombre with id 11: "+personRepository.getFullNameById(11L)); // es nulo porque no existe
+		
+		System.out.println("Objects with id 1: "+ Arrays.asList( personRepository.getFieldsById(1L)[0] ) );
+		System.out.println("Objects Nombre with id 11: "+  Arrays.asList( personRepository.getFieldsById(11L) )); // es nulo porque no existe
 		
 		sc.close();
 		
