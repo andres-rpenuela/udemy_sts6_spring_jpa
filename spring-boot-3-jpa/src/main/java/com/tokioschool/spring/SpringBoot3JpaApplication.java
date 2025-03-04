@@ -7,6 +7,7 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.aspectj.bridge.Message;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -26,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SpringBoot3JpaApplication implements ApplicationRunner {
 
 	private final PersonRepository personRepository;
-	
+	private static Scanner sc = new Scanner(System.in);
+
 	public static void main(String[] args) {
 		SpringApplication.run(SpringBoot3JpaApplication.class, args);
 	}
@@ -74,11 +76,19 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		log.info("Obtain person data like name (based query method): ");
 		personRepository.findByNameContains("Andres").ifPresent(System.out::println);
 		
-		/*** ***/
+		/*** example not transactional for created ***/
 		createdPerson();
+		
 		/** exmaple transacion **/
 		Person p =  creatredDinamiPerson();
-		finfindPersonById(p.getId()).ifPresent(System.out::println);
+		findPersonById(p.getId()).ifPresent(System.out::println);
+		
+		/** example of update transactional dinamyc **/
+		update();
+		
+		
+		sc.close();
+		
 	}
 
 	private Person createdPerson() {
@@ -88,7 +98,7 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 	
 	@Transactional
 	private Person creatredDinamiPerson() {
-		Scanner sc = new Scanner(System.in);
+		
 		System.out.print("Inserte name: ");
 		String name = sc.nextLine();
 		
@@ -99,11 +109,45 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		String programingLanguage = sc.nextLine();
 		
 		Person person = Person.builder().name(name).lastname(lastName).programingLanguage(programingLanguage).build();
+
 		return personRepository.save(person);
 	}
 	
+	
 	@Transactional(readOnly = true)
-	private Optional<Person> finfindPersonById(Long id){
+	private Optional<Person> findPersonById(Long id){
 		return personRepository.findById(id);
+	}
+	
+	@Transactional
+	public void update() {
+		
+		System.out.print("Inserte el id: ");
+		Long id = Long.parseLong(sc.nextLine());
+		
+		// primero se busca el usuario a modificar y luego se persite
+		Optional<Person> personOpt = personRepository.findById(id); 
+		if(personOpt.isPresent() ) {
+			Person person = personOpt.get();
+			log.info("Person: {}",person);
+			
+			System.out.print("Inserte name: ");
+			String name = sc.nextLine();
+			
+			System.out.print("Inserte lastanme: ");
+			String lastName = sc.nextLine();
+			
+			System.out.print("Inserte programing langauge: ");
+			String programingLanguage = sc.nextLine();
+			
+			
+			person.setName(name);
+			person.setLastname(lastName);
+			person.setProgramingLanguage(programingLanguage);
+			
+			Person personUpdated = personRepository.save(person);
+		}else{
+			log.info("Person isn't in the system");
+		}
 	}
 }
