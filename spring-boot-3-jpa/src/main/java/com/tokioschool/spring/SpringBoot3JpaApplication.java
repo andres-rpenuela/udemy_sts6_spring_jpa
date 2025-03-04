@@ -77,15 +77,17 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		personRepository.findByNameContains("Andres").ifPresent(System.out::println);
 		
 		/*** example not transactional for created ***/
-		createdPerson();
+		//createdPerson();
 		
 		/** exmaple transacion **/
-		Person p =  creatredDinamiPerson();
-		findPersonById(p.getId()).ifPresent(System.out::println);
+		//Person p =  creatredDinamiPerson();
+		//findPersonById(p.getId()).ifPresent(System.out::println);
 		
 		/** example of update transactional dinamyc **/
-		update();
+		//update();
 		
+		/** example of remove delete **/
+		delete();
 		
 		sc.close();
 		
@@ -150,4 +152,23 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 			log.info("Person isn't in the system");
 		}
 	}
+	
+	 @Transactional
+	 public void delete() {
+		 // show result before
+		 personRepository.findAll().forEach(System.out::println);
+		 
+		 System.out.print("Inserte el id: ");
+		 Long id = Long.parseLong(sc.nextLine());
+			
+			// option a
+			//personRepository.deleteById(id);
+			
+			// option b
+			Optional<Person> personOpt = personRepository.findById(id);
+			personOpt.ifPresent(person -> personRepository.delete(person));
+			
+			// show result after
+			personRepository.findAll().forEach(System.out::println);
+	 }
 }
