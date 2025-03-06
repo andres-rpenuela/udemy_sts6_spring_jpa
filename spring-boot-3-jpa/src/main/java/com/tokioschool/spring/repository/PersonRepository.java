@@ -62,7 +62,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	
 	/** get fields custom part 2 **/
 	@Query("select p.id, p.name, p.lastname, p.programingLanguage from Person p where p.id = ?1")
-	Object obtenerPersonDataFullById(Long id); // jpa automacitamente devuelve Object como un "Object[]"
+	//Object obtenerPersonDataFullById(Long id); // jpa automacitamente devuelve Object como un "Object[]"
+	Optional<Object> obtenerPersonDataFullById(Long id); // jpa automacitamente devuelve Object como un "Object[]"
 	
 	@Query("select p.name, p.programingLanguage from Person p")
 	List<Object[]> obtenerPersonDataList();

@@ -195,8 +195,15 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		 System.out.print("Inserte el id: ");
 		 Long id = Long.parseLong(sc.nextLine());
 			
-		 Object[] row = (Object[]) personRepository.obtenerPersonDataFullById(id);
-		 System.out.println("id= %d,name= %s, lastname= %s, progamming= %s".formatted(row));
+		 //Object[] row = (Object[]) personRepository.obtenerPersonDataFullById(id);
+		 //System.out.println("id= %d,name= %s, lastname= %s, progamming= %s".formatted(row));
+		 
+		 Optional<Object> rowOptional = personRepository.obtenerPersonDataFullById(id);
+		 if( rowOptional.isPresent()) {
+			 Object[] row = (Object[]) rowOptional.get();
+			 System.out.println("id= %d,name= %s, lastname= %s, progamming= %s".formatted(row));
+		 }
+		 
 		 System.out.println();
 	 }
 }
