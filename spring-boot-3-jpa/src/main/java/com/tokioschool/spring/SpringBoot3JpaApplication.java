@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SpringBoot3JpaApplication implements ApplicationRunner {
 
 	private final PersonRepository personRepository;
-	private static Scanner sc = new Scanner(System.in);
+	private  Scanner sc;
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringBoot3JpaApplication.class, args);
@@ -36,6 +36,9 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
+		
+		sc = new Scanner(System.in);
+		
 		Faker faker = new Faker();
 		List<Person> persons = IntStream.range(1, 5).mapToObj(operand -> Person
 				.builder()
@@ -91,15 +94,17 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//delete();
 		
 		/** example fields custom of queries part 1 **/
-		System.out.println("Nombre with id 1: "+personRepository.getNameById(1L));
-		System.out.println("Nombre with id 11: "+personRepository.getNameById(11L)); // es nulo porque no existe
+		//System.out.println("Nombre with id 1: "+personRepository.getNameById(1L));
+		//System.out.println("Nombre with id 11: "+personRepository.getNameById(11L)); // es nulo porque no existe
 		
-		System.out.println("Full Nombre with id 1: "+personRepository.getFullNameById(1L));
-		System.out.println("Full Nombre with id 11: "+personRepository.getFullNameById(11L)); // es nulo porque no existe
+		//System.out.println("Full Nombre with id 1: "+personRepository.getFullNameById(1L));
+		//System.out.println("Full Nombre with id 11: "+personRepository.getFullNameById(11L)); // es nulo porque no existe
 		
-		System.out.println("Objects with id 1: "+ Arrays.asList( personRepository.getFieldsById(1L)[0] ) );
-		System.out.println("Objects Nombre with id 11: "+  Arrays.asList( personRepository.getFieldsById(11L) )); // es nulo porque no existe
+		//System.out.println("Objects with id 1: "+ Arrays.asList( personRepository.getFieldsById(1L)[0] ) );
+		//System.out.println("Objects Nombre with id 11: "+  Arrays.asList( personRepository.getFieldsById(11L) )); // es nulo porque no existe
 		
+		/** example fields custom of queries part 2 **/
+		fieldCustom();
 		sc.close();
 		
 	}
@@ -181,5 +186,17 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 			
 			// show result after
 			personRepository.findAll().forEach(System.out::println);
+	 }
+	 
+	 @Transactional(readOnly = true)
+	 public void fieldCustom() {
+		 System.out.println("Consulta por cambpos personalizada por el id");
+		 
+		 System.out.print("Inserte el id: ");
+		 Long id = Long.parseLong(sc.nextLine());
+			
+		 Object[] row = (Object[]) personRepository.obtenerPersonDataFullById(id);
+		 System.out.println("id= %d,name= %s, lastname= %s, progamming= %s".formatted(row));
+		 System.out.println();
 	 }
 }

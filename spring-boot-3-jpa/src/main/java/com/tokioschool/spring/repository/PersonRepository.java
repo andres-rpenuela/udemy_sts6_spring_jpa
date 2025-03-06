@@ -49,7 +49,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	public Optional<Person> findByNameContains(String name);
 	
 	
-	// obtenre campos personalizados
+	// obtenre campos personalizados part 1
 	@Query("select p.name from Person p where p.id =?1")
 	public String getNameById(Long id);
 	
@@ -58,6 +58,13 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	
 	
 	@Query("select p.name,p.lastname from Person p where p.id =?1")
-	public Object[][] getFieldsById(Long id);
+	public Object[][] getFieldsById(Long id); // en la parte 2 se simplifica
+	
+	/** get fields custom part 2 **/
+	@Query("select p.id, p.name, p.lastname, p.programingLanguage from Person p where p.id = ?1")
+	Object obtenerPersonDataFullById(Long id); // jpa automacitamente devuelve Object como un "Object[]"
+	
+	@Query("select p.name, p.programingLanguage from Person p")
+	List<Object[]> obtenerPersonDataList();
 
 }
