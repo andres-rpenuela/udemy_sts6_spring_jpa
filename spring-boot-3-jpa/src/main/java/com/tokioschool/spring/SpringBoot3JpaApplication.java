@@ -104,7 +104,12 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//System.out.println("Objects Nombre with id 11: "+  Arrays.asList( personRepository.getFieldsById(11L) )); // es nulo porque no existe
 		
 		/** example fields custom of queries part 2 **/
-		fieldCustom();
+		//fieldCustom();
+		
+		/** example result mixted of queries **/
+		fieldCustomFindMitexd();
+		
+		
 		sc.close();
 		
 	}
@@ -205,5 +210,19 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		 }
 		 
 		 System.out.println();
+	 }
+	 
+	 @Transactional(readOnly = true)
+	 public void fieldCustomFindMitexd() {
+		 System.out.println("Consulta con resultado de objetos mixtos");
+		 
+		 // objeto mixto: persona, string
+		 List<Object[]> rows = personRepository.findAllMixPerson();
+		 rows.stream().forEach(row -> System.out.println("programing: "+row[0]+", person: "+row[1]));
+		 
+		 // consulta personliza que el resutlado puebla un objeto persona con el constructor
+		 List<Person> persons = personRepository.findAllClassPerson();
+		 persons.stream().forEach(person -> System.out.println(person));
+		 
 	 }
 }

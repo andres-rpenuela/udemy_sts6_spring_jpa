@@ -68,4 +68,11 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	@Query("select p.name, p.programingLanguage from Person p")
 	List<Object[]> obtenerPersonDataList();
 
+	/** get field mixted **/
+	@Query("select p, p.programingLanguage from Person p")
+	List<Object[]> findAllMixPerson();
+	
+	
+	@Query("select new Person(p.id,p.name,p.lastname,p.programingLanguage) from Person p")
+	List<Person> findAllClassPerson();
 }
