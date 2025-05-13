@@ -8,7 +8,10 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.tokioschool.spring.dto.PersonDto;
 import com.tokioschool.spring.entity.Person;
+import com.tokioschool.spring.projections.NameDto;
+import com.tokioschool.spring.projections.NameProjection;
 
 @Repository
 public interface PersonRepository extends CrudRepository<Person, Long>{
@@ -75,4 +78,20 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	
 	@Query("select new Person(p.id,p.name,p.lastname,p.programingLanguage) from Person p")
 	List<Person> findAllClassPerson();
+	
+	/** projections	**/
+	// over interface
+	@Query("select p from Person p")
+	List<NameProjection> getNames();
+	
+	// se esceifica el paquete, porque no es una clase entity y no esta dentro del contexto
+	@Query("select new com.tokioschool.spring.projections.NameDto(p.name,p.lastname) from Person p")
+	List<NameDto> getNameDtos();
+	
+	@Query("select p.name, p.lastname from Person p")
+	List<Object[]> getNamesAsObj();
+	
+	/** recover over dto's **/
+	@Query("select new com.tokioschool.spring.dto.PersonDto(p.name,p.lastname) from Person p")
+	List<PersonDto> findPersonDtos();
 }

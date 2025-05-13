@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.github.javafaker.Faker;
 import com.tokioschool.spring.entity.Person;
+import com.tokioschool.spring.projections.NameDto;
+import com.tokioschool.spring.projections.NameProjection;
 import com.tokioschool.spring.repository.PersonRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -107,9 +109,14 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//fieldCustom();
 		
 		/** example result mixted of queries **/
-		fieldCustomFindMitexd();
+		//fieldCustomFindMitexd();
 		
+		/** projections **/
+		//projections();
 		
+		/** recover person as persondto **/
+		System.out.print("Result query's in dto ");
+		personRepository.findPersonDtos().forEach(System.out::println);
 		sc.close();
 		
 	}
@@ -191,6 +198,7 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 			
 			// show result after
 			personRepository.findAll().forEach(System.out::println);
+			
 	 }
 	 
 	 @Transactional(readOnly = true)
@@ -224,5 +232,23 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		 List<Person> persons = personRepository.findAllClassPerson();
 		 persons.stream().forEach(person -> System.out.println(person));
 		 
+	 }
+	 
+	 @Transactional(readOnly = true)
+	 public void projections() {
+		 System.out.println("Proyecciones on Interface");
+		 List<NameProjection> names = personRepository.getNames();
+		 names.stream().forEach(t -> System.out.println(t.getName()+", "+t.getLastname()) );
+		 
+		 System.out.println("Proyecciones on Dto");
+		 List<NameDto> names2 = personRepository.getNameDtos();
+		 names2.stream().forEach(t -> System.out.println(t.getName()+", "+t.getLastname()) );
+		
+		 System.out.println("Proyecciones on Collection<Objec[]> ");
+		 for (Object[] obj :personRepository.getNamesAsObj()) {
+			    String name = (String) obj[0];
+			    String lastname = (String) obj[1];
+			    System.out.println(name + " " + lastname);
+			}
 	 }
 }
