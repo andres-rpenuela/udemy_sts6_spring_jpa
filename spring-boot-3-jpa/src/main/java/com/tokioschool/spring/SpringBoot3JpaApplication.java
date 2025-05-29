@@ -115,10 +115,16 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//projections();
 		
 		/** recover person as persondto **/
-		System.out.print("Result query's in dto ");
-		personRepository.findPersonDtos().forEach(System.out::println);
-		sc.close();
+		//System.out.print("Result query's in dto ");
+		//personRepository.findPersonDtos().forEach(System.out::println);
 		
+		
+		/** distinc **/
+		System.out.print("Use distinc in Query ");
+		personRepository.getNamesPersons().forEach(System.out::println);
+		System.out.print("Use distinc in Query v2 ");
+		personRepository.getProgamingLanguageAndNameDistint().stream().map(Arrays::asList).forEach(System.out::println);
+
 	}
 
 	private Person createdPerson() {

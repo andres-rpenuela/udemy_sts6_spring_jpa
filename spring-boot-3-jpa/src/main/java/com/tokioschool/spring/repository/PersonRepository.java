@@ -71,7 +71,6 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	@Query("select p.name, p.programingLanguage from Person p")
 	List<Object[]> obtenerPersonDataList();
 
-	/** get field mixted **/
 	@Query("select p, p.programingLanguage from Person p")
 	List<Object[]> findAllMixPerson();
 	
@@ -94,4 +93,11 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	/** recover over dto's **/
 	@Query("select new com.tokioschool.spring.dto.PersonDto(p.name,p.lastname) from Person p")
 	List<PersonDto> findPersonDtos();
+	
+	/** use distinc blocked word JPQL / HQL  **/
+	@Query("select distinct p.name from Person p")
+	List<String> getNamesPersons();
+	
+	@Query("select distinct(p.programingLanguage,p.name) from Person p")
+	List<String[]> getProgamingLanguageAndNameDistint();
 }
