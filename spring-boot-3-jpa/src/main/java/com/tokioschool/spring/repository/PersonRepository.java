@@ -100,4 +100,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	
 	@Query("select distinct(p.programingLanguage,p.name) from Person p")
 	List<String[]> getProgamingLanguageAndNameDistint();
+	
+	@Query("select count( distinct(p.programingLanguage) ) from Person p")
+	List<Long> getProgamingLanguageDistintCount();
 }

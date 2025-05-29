@@ -124,6 +124,8 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		personRepository.getNamesPersons().forEach(System.out::println);
 		System.out.print("Use distinc in Query v2 ");
 		personRepository.getProgamingLanguageAndNameDistint().stream().map(Arrays::asList).forEach(System.out::println);
+		System.out.print("Count Progamming Language: ");
+		personRepository.getProgamingLanguageDistintCount().forEach(System.out::println);
 
 	}
 
