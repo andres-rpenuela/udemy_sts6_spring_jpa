@@ -120,13 +120,39 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		
 		
 		/** distinc **/
-		System.out.print("Use distinc in Query ");
-		personRepository.getNamesPersons().forEach(System.out::println);
-		System.out.print("Use distinc in Query v2 ");
-		personRepository.getProgamingLanguageAndNameDistint().stream().map(Arrays::asList).forEach(System.out::println);
-		System.out.print("Count Progamming Language: ");
-		personRepository.getProgamingLanguageDistintCount().forEach(System.out::println);
-
+		//System.out.print("Use distinc in Query ");
+		//personRepository.getNamesPersons().forEach(System.out::println);
+		//System.out.print("Use distinc in Query v2 ");
+		//personRepository.getProgamingLanguageAndNameDistint().stream().map(Arrays::asList).forEach(System.out::println);
+		//System.out.print("Count Progamming Language: ");
+		//personRepository.getProgamingLanguageDistintCount().forEach(System.out::println);
+		
+		/** concat, upper, lower y operartor like **/
+		System.out.print("Exmample Concat: ");
+		personRepository.finAllFullNameConcat().forEach(System.out::println);
+		
+		System.out.print("Exmample Conca WithPipe:  ");
+		personRepository.finAllFullNameConcatWithPipe().forEach(System.out::println);
+		
+		System.out.print("Exmample Concat Lower : ");
+		personRepository.finAllFullNameConcatLower().forEach(System.out::println);
+		
+		System.out.print("Exmample Concat WithPipe Upper:  ");
+		personRepository.finAllFullNameConcatWithPipeUpper().forEach(System.out::println);
+		// Like, sensitive to %%
+		System.out.print("Exmample Like: 'a' and Query ... like %1");
+		personRepository.findPersonNameLikeNameV0("a").forEach(System.out::println);
+		System.out.print("Exmample Like: %a% and Query ... like %1  ");
+		personRepository.findPersonNameLikeNameV0("%a%").forEach(System.out::println);
+		
+		System.out.print("Exmample Like: 'a' as @Param and Query like :name ");
+		personRepository.findPersonNameLikeNameV1("a").forEach(System.out::println);
+		System.out.print("Exmample Like: '%a%' as @Param and Query like :name ");
+		personRepository.findPersonNameLikeNameV1("%a%").forEach(System.out::println);
+		
+		System.out.print("Exmample Like: 'a' and Query ... like %1% ");
+		personRepository.findPersonNameLikeNameV2("a").forEach(System.out::println);
+		
 	}
 
 	private Person createdPerson() {

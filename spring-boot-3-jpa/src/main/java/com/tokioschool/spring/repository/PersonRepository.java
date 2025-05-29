@@ -103,4 +103,29 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	
 	@Query("select count( distinct(p.programingLanguage) ) from Person p")
 	List<Long> getProgamingLanguageDistintCount();
+	
+	// example de JPQL / HQL de concat, upper, lower and Like
+	@Query("select CONCAT(p.name, ' ',p.lastname) as fullname from Person p")
+	List<String> finAllFullNameConcat();
+	
+	@Query("select p.name || ' ' || p.lastname from Person p")
+	//@Query("select (p.name || ' ' || p.lastname) as fullanme from Person p")
+	List<String> finAllFullNameConcatWithPipe();
+	
+	@Query("select UPPER(p.name || ' ' || p.lastname) from Person p")
+	List<String> finAllFullNameConcatWithPipeUpper();
+	
+	@Query("select LOWER( CONCAT(p.name, ' ',p.lastname) ) as fullname from Person p")
+	List<String> finAllFullNameConcatLower();
+	
+	@Query("select p.name from Person p where p.name LIKE (?1) ")
+	List<String> findPersonNameLikeNameV0(String name);
+	
+	@Query("select p.name from Person p where p.name LIKE (:name) ")
+	List<String> findPersonNameLikeNameV1(@Param("name") String name);
+	
+	@Query("select p.name from Person p where p.name like %?1% ")
+	List<String> findPersonNameLikeNameV2(String name);
+
+	
 }
