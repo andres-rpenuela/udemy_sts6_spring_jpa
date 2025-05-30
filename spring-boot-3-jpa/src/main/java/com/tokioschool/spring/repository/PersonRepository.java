@@ -128,4 +128,14 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	List<String> findPersonNameLikeNameV2(String name);
 
 	
+	/** beetwen [lower,top), top no se incluye**/
+	List<Person> findPersonByIdBetween(Long lower,Long top);
+	
+	@Query("select p from Person p where p.id between ?1 and ?2")
+	List<Person> findPersonByIdBetweenHQL(Long lower,Long top);
+	
+	List<Person> findPersonByNameBetween(String lower,String top);
+	
+	@Query("select p from Person p where p.name between ?1 and ?2")
+	List<Person> findPersonByNameBetweenHQL(String lower,String top);
 }

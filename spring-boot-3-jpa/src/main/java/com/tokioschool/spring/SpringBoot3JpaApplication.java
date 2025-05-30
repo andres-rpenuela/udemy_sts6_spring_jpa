@@ -128,6 +128,13 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//personRepository.getProgamingLanguageDistintCount().forEach(System.out::println);
 		
 		/** concat, upper, lower y operartor like **/
+		//exampleConcatUpperLowerLike();
+		
+		/** between **/
+		exampleBeetwen();
+	}
+
+	private void exampleConcatUpperLowerLike() {
 		System.out.print("Exmample Concat: ");
 		personRepository.finAllFullNameConcat().forEach(System.out::println);
 		
@@ -152,7 +159,6 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		
 		System.out.print("Exmample Like: 'a' and Query ... like %1% ");
 		personRepository.findPersonNameLikeNameV2("a").forEach(System.out::println);
-		
 	}
 
 	private Person createdPerson() {
@@ -284,5 +290,16 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 			    String lastname = (String) obj[1];
 			    System.out.println(name + " " + lastname);
 			}
+	 }
+	 
+	 private void exampleBeetwen() {
+		 System.out.println("Example Beetwen id [3 to 5)");
+		 personRepository.findPersonByIdBetween(3L, 5L).forEach(System.out::println);
+		 personRepository.findPersonByIdBetweenHQL(3L, 5L).forEach(System.out::println);
+		 
+		 System.out.println("Example Beetwen name start [a - E)");
+		 personRepository.findPersonByNameBetween("a", "E").forEach(System.out::println); // SERA VACIO
+		 System.out.println("Example Beetwen name start [A - E)");
+		 personRepository.findPersonByNameBetweenHQL("A", "F").forEach(System.out::println); // DARA AQUELLOS NOMBRES QUE EMPIZE POR A HASTA LA E
 	 }
 }
