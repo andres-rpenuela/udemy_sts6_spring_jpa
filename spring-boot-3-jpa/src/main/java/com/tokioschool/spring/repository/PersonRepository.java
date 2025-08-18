@@ -129,8 +129,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 
 	
 	/** beetwen [lower,top), top no se incluye**/
+	// query method
 	List<Person> findPersonByIdBetween(Long lower,Long top);
-	
+
+	// JPQL / HQL
 	@Query("select p from Person p where p.id between ?1 and ?2")
 	List<Person> findPersonByIdBetweenHQL(Long lower,Long top);
 	
@@ -138,4 +140,14 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	
 	@Query("select p from Person p where p.name between ?1 and ?2")
 	List<Person> findPersonByNameBetweenHQL(String lower,String top);
+
+	/** order by **/
+	List<Person> findPersonByIdBetweenOrderByNameDesc(Long lower,Long top);
+	List<Person> findPersonByIdBetweenOrderByNameDescLastnameAsc(Long lower,Long top);
+
+
+	@Query("select p from Person p where p.id between  ?1 and ?2 order by p.name desc")
+	List<Person> findPersonByIdBetweenHQLOrderByNameDesc(Long lower,Long top);
+	@Query("select p from Person p where p.id between  ?1 and ?2 order by p.name desc, p.lastname asc")
+	List<Person> findPersonByIdBetweenHQLOrderByNameDescLastnameAsc(Long lower,Long top);
 }

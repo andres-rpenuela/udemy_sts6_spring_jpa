@@ -72,7 +72,7 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		
 		log.info("Obtain person data by id: ");
 		personRepository.findById(1L).ifPresent(System.out::println);
-		
+
 		log.info("Obtain person data by name (custom): ");
 		personRepository.findOneName("Andres").ifPresent(System.out::println);
 		
@@ -131,7 +131,10 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//exampleConcatUpperLowerLike();
 		
 		/** between **/
-		exampleBeetwen();
+		//exampleBeetwen();
+
+		/** order by **/
+		exampleOrderBy();
 	}
 
 	private void exampleConcatUpperLowerLike() {
@@ -302,4 +305,16 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		 System.out.println("Example Beetwen name start [A - E)");
 		 personRepository.findPersonByNameBetweenHQL("A", "F").forEach(System.out::println); // DARA AQUELLOS NOMBRES QUE EMPIZE POR A HASTA LA E
 	 }
+
+	private void exampleOrderBy() {
+		System.out.println("Example Beetwen id [3 to 5), with order by");
+		personRepository.findPersonByIdBetween(3L, 5L).forEach(System.out::println);
+		personRepository.findPersonByIdBetweenHQL(3L, 5L).forEach(System.out::println);
+
+		System.out.println("Example Beetwen id [3 to 5)l, with order by name desc");
+		personRepository.findPersonByIdBetweenOrderByNameDesc(3L, 5L).forEach(System.out::println);
+		personRepository.findPersonByIdBetweenOrderByNameDescLastnameAsc(3L, 5L).forEach(System.out::println);
+		personRepository.findPersonByIdBetweenHQLOrderByNameDesc(3L, 5L).forEach(System.out::println);
+		personRepository.findPersonByIdBetweenHQLOrderByNameDescLastnameAsc(3L, 5L).forEach(System.out::println);
+	}
 }
