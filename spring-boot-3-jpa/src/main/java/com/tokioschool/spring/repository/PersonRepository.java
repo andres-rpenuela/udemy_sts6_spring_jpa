@@ -179,5 +179,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	@Query("select p.name, min( length(p.name) ) from Person p group by p.name")
 	Object[] getPersonNameWithNameMin();
 
-
+	/** funciones jqpl de agregaicon avg, sum, count, min, max,.. **/
+	@Query("select min(p.id), max(p.id), sum(p.id), avg( length(p.name) ), count(p) from Person p")
+	Object getResumenAggregationFunction();
 }
