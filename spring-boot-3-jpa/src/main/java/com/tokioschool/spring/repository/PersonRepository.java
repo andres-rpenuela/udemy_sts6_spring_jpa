@@ -165,4 +165,14 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 
 	@Query("select max(p.id) from Person p")
 	Long maxId();
+
+	/** fucnioens jpql legnth **/
+	@Query("select p.name, length(p.name) from Person p")
+	List<Object[]> getPersonNameLength();
+
+	@Query("select p.name, max( length(p.name) ) from Person p")
+	Object[] getPersonWithNameMax();
+
+	@Query("select p.name, min( length(p.name) ) from Person p")
+	Object[] getPersonWithNameMin();
 }
