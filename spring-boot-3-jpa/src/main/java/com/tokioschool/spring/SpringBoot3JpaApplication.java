@@ -146,7 +146,10 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//exampleSummaryAggregationFunctions();
 
 		/** example de subconsultas **/
-		exampleSubquery();
+		//exampleSubquery();
+
+		/** example con subconsutlas werhe in **/
+		exampleWhereIn();
 	}
 
 	private void exampleConcatUpperLowerLike() {
@@ -382,6 +385,15 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		List<Object[]> results = personRepository.getFullNameShorterName();
 		results.forEach(row -> System.out.println("Full Name: "+row[0]+", length name: "+row[1]));
 
+	}
+
+	private void exampleWhereIn() {
+
+		System.out.println("Where id in (1,2,3");
+		personRepository.getPersonByIds( ).forEach(System.out::println);
+
+		System.out.println("WHere id in (?1)");
+		personRepository.getPersonByIds( List.of(1L,2L,3L )).forEach(System.out::println);
 	}
 }
 

@@ -192,4 +192,11 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 		)
 	""")
 	List<Object[]> getFullNameShorterName();
+
+	/** ejemplo were in **/
+	@Query("select p from Person p where p.id in (1,2,3)")
+	List<Person> getPersonByIds();
+
+	@Query("select p from Person p where p.id in (?1)")
+	List<Person> getPersonByIds(List<Long> ids);
 }
