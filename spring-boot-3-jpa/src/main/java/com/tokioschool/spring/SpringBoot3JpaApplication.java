@@ -158,6 +158,8 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		personService.search("Andres","Java").forEach(System.out::println);
 	}
 
+
+
 	private void exampleConcatUpperLowerLike() {
 		System.out.print("Exmample Concat: ");
 		personRepository.finAllFullNameConcat().forEach(System.out::println);
@@ -348,6 +350,20 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		System.out.println("Max id Person: "+personRepository.maxId() );
 		System.out.println("Min id Person: "+personRepository.minId() );
 
+	}
+
+	private void exampleFunctionLength() {
+		System.out.println("Lista de nombres y numero de caracteres");
+		List<Object[]> result = personRepository.getPersonNameLength();
+		result.forEach(row -> System.out.println(MessageFormat.format("Name: {0}, Lenght: {1}",row[0],row[1])));
+
+		System.out.println("Persona con el nombre mas largo");
+		Object[] pMax = personRepository.getPersonWithNameMax();
+		System.out.println( "Name: "+pMax[0]+", Length: "+pMax[1]);
+
+		System.out.println("Persona con el nombre mas corot");
+		Object[] pMin = personRepository.getPersonWithNameMin();
+		System.out.println( "Name: "+pMin[0]+", Length: "+pMin[1]);
 	}
 
 	private void exampleFunctionLength() {
