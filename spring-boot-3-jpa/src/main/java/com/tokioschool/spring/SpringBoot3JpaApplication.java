@@ -143,7 +143,10 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//exampleFunctionLength();
 
 		/** resumen de funnciones de agregacion jpql **/
-		exampleSummaryAggregationFunctions();
+		//exampleSummaryAggregationFunctions();
+
+		/** example de subconsultas **/
+		exampleSubquery();
 	}
 
 	private void exampleConcatUpperLowerLike() {
@@ -351,7 +354,7 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		List<Person> pFull = personRepository.getPersonWithLongestName();
 		pFull.forEach(System.out::println);
 
-		System.out.println("Persona con el nombre mas corot");
+		System.out.println("Persona con el nombre mas corto");
 		Object[] pMin = personRepository.getPersonNameWithNameMin();
 		System.out.println( "Name: "+pMin[0]+", Length: "+pMin[1]);
 	}
@@ -366,7 +369,18 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		System.out.println("sum(p.id)= "+result[2]);
 		System.out.println("avg( length(p.name) )= "+result[3]);
 		System.out.println("count(p)= "+result[4]);
+	}
 
+
+	private void exampleSubquery() {
+
+		System.out.println("Persona con el nombre mas largo");
+		List<Person> pFull = personRepository.getPersonWithLongestName();
+		pFull.forEach(System.out::println);
+
+		System.out.println("Full name de la perosna con nombre mas corto");
+		List<Object[]> results = personRepository.getFullNameShorterName();
+		results.forEach(row -> System.out.println("Full Name: "+row[0]+", length name: "+row[1]));
 
 	}
 }
