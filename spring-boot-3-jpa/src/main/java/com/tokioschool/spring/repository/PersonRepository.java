@@ -150,4 +150,19 @@ public interface PersonRepository extends CrudRepository<Person, Long>{
 	List<Person> findPersonByIdBetweenHQLOrderByNameDesc(Long lower,Long top);
 	@Query("select p from Person p where p.id between  ?1 and ?2 order by p.name desc, p.lastname asc")
 	List<Person> findPersonByIdBetweenHQLOrderByNameDescLastnameAsc(Long lower,Long top);
+
+	/** funciones de agregacion JPQL: count, max, min **/
+	// example de Count, si no hay registros, devuelve 0
+	// this is method query
+	Integer countByName(String name);
+
+	@Query("select count(p) from Person p")
+	Long totalPerson();
+
+	// devuel el tipo del id
+	@Query("select min(p.id) from Person p")
+	Long minId();
+
+	@Query("select max(p.id) from Person p")
+	Long maxId();
 }

@@ -1,14 +1,11 @@
 package com.tokioschool.spring;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.aspectj.bridge.Message;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -134,7 +131,10 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//exampleBeetwen();
 
 		/** order by **/
-		exampleOrderBy();
+		//exampleOrderBy();
+
+		/** funciones de agregacion **/
+		exampleFunctionsJPQL();
 	}
 
 	private void exampleConcatUpperLowerLike() {
@@ -316,5 +316,16 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		personRepository.findPersonByIdBetweenOrderByNameDescLastnameAsc(3L, 5L).forEach(System.out::println);
 		personRepository.findPersonByIdBetweenHQLOrderByNameDesc(3L, 5L).forEach(System.out::println);
 		personRepository.findPersonByIdBetweenHQLOrderByNameDescLastnameAsc(3L, 5L).forEach(System.out::println);
+	}
+
+	private void exampleFunctionsJPQL(){
+		System.out.println("Example count by name: ");
+		System.out.println("Count name = Andres: " + personRepository.countByName("Andres"));
+		System.out.println("Count name = Sara: " + personRepository.countByName("Sara")); // si no hay, devuelve 0
+
+		System.out.println("Total perosn: "+personRepository.totalPerson() );
+		System.out.println("Max id Person: "+personRepository.maxId() );
+		System.out.println("Min id Person: "+personRepository.minId() );
+
 	}
 }
