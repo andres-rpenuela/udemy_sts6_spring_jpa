@@ -21,7 +21,6 @@
    - @JoinTable  
 5. [Estrategias de herencia en JPA](#estrategias-de-herencia-en-jpa)  
 6. [Embebidos con @Embeddable y @Embedded](#embebidos-con-embeddable-y-embedded)  
-7. [Ciclo de vida de una entidad en JPA](#ciclo-de-vida-de-una-entidad-en-jpa)  
 
 ---
 
@@ -246,42 +245,173 @@ public class Person {
 
 ---
 
-## 7. Ciclo de vida de una entidad en JPA
+
+# 📘 Apuntes: Ciclo de vida de entidades JPA + Anotaciones de callbacks
+
+
+## Índice
+1. [Ciclo de vida de una entidad en JPA](#ciclo-de-vida-de-una-entidad-en-jpa)  
+   - Transient  
+   - Managed  
+   - Detached  
+   - Removed  
+2. [Anotaciones de ciclo de vida](#anotaciones-de-ciclo-de-vida)  
+   - @PrePersist / @PostPersist  
+   - @PreUpdate / @PostUpdate  
+   - @PreRemove / @PostRemove  
+   - @PostLoad  
+3. [Ejemplo completo](#ejemplo-completo)  
+
+---
+
+## 1. Ciclo de vida de una entidad en JPA
 
 Las entidades en JPA pasan por diferentes estados controlados por el **EntityManager**:
 
 1. **Transient (transitoria)**
 
-    * La entidad acaba de crearse con `new`.
-    * No está asociada a la BD.
-    * Ejemplo: `Person p = new Person();`
+   * La entidad acaba de crearse con `new`.
+   * No está asociada a la BD.
+   * Ejemplo: `Person p = new Person();`
 
 2. **Managed (gestionada/persistente)**
 
-    * Se asocia al contexto de persistencia (`EntityManager`).
-    * Los cambios se sincronizan automáticamente con la BD.
-    * Ejemplo: `em.persist(p);`
+   * Se asocia al contexto de persistencia (`EntityManager`).
+   * Los cambios se sincronizan automáticamente con la BD.
+   * Ejemplo: `em.persist(p);`
 
 3. **Detached (desasociada)**
 
-    * La entidad existió en el contexto pero ahora está fuera.
-    * No se sincronizan cambios con la BD.
-    * Ejemplo: después de cerrar el `EntityManager`.
+   * La entidad existió en el contexto pero ahora está fuera.
+   * No se sincronizan cambios con la BD.
+   * Ejemplo: después de cerrar el `EntityManager`.
 
 4. **Removed (eliminada)**
 
-    * Marcada para borrarse de la BD.
-    * Se elimina en el `flush` o `commit`.
-    * Ejemplo: `em.remove(p);`
+   * Marcada para borrarse de la BD.
+   * Se elimina en el `flush` o `commit`.
+   * Ejemplo: `em.remove(p);`
 
----
-
-📌 **Resumen gráfico del ciclo de vida**:
+📌 **Resumen gráfico**:
 
 ```
 new → [persist()] → managed → [remove()] → removed
           ↓
       [detach()] → detached → [merge()] → managed
+```
+
+---
+
+## 2. Anotaciones de ciclo de vida
+
+JPA provee anotaciones para ejecutar **métodos automáticamente** en cada estado:
+
+### 🔹 Persistencia
+
+* **@PrePersist** → antes de insertar (`persist`).
+* **@PostPersist** → después de insertar.
+
+```java
+@PrePersist
+public void prePersist() { this.createdAt = LocalDateTime.now(); }
+
+@PostPersist
+public void postPersist() { System.out.println("Entidad persistida con ID " + id); }
+```
+
+### 🔹 Actualización
+
+* **@PreUpdate** → antes de actualizar.
+* **@PostUpdate** → después de actualizar.
+
+```java
+@PreUpdate
+public void preUpdate() { this.updatedAt = LocalDateTime.now(); }
+
+@PostUpdate
+public void postUpdate() { System.out.println("Entidad actualizada"); }
+```
+
+### 🔹 Eliminación
+
+* **@PreRemove** → antes de eliminar.
+* **@PostRemove** → después de eliminar.
+
+```java
+@PreRemove
+public void preRemove() { System.out.println("Eliminando entidad " + id); }
+
+@PostRemove
+public void postRemove() { System.out.println("Entidad eliminada"); }
+```
+
+### 🔹 Carga
+
+* **@PostLoad** → después de cargar desde la BD.
+
+```java
+@PostLoad
+public void postLoad() { System.out.println("Entidad cargada: " + name); }
+```
+
+---
+
+## 3. Ejemplo completo
+
+```java
+@Entity
+@Table(name = "persons")
+public class Person {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onPrePersist() {
+        this.createdAt = LocalDateTime.now();
+        System.out.println("⏳ PrePersist ejecutado");
+    }
+
+    @PostPersist
+    public void onPostPersist() {
+        System.out.println("✅ PostPersist ejecutado con ID " + id);
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        this.updatedAt = LocalDateTime.now();
+        System.out.println("✏️ PreUpdate ejecutado");
+    }
+
+    @PostUpdate
+    public void onPostUpdate() {
+        System.out.println("🔄 PostUpdate ejecutado");
+    }
+
+    @PreRemove
+    public void onPreRemove() {
+        System.out.println("🗑 PreRemove ejecutado para " + id);
+    }
+
+    @PostRemove
+    public void onPostRemove() {
+        System.out.println("❌ PostRemove ejecutado");
+    }
+
+    @PostLoad
+    public void onPostLoad() {
+        System.out.println("📥 PostLoad ejecutado para " + name);
+    }
+}
+```
+
+---
+
+✅ Con estas anotaciones se puede implementar **auditoría automática** (ej. `createdAt`, `updatedAt`) y gestionar acciones en cada transición del ciclo de vida.
+
 ```
 
 ---
