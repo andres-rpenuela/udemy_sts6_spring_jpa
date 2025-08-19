@@ -8,6 +8,7 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.tokioschool.spring.service.PersonService;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -30,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SpringBoot3JpaApplication implements ApplicationRunner {
 
 	private final PersonRepository personRepository;
+	private final PersonService personService;
+
 	private  Scanner sc;
 
 	public static void main(String[] args) {
@@ -149,7 +152,10 @@ public class SpringBoot3JpaApplication implements ApplicationRunner {
 		//exampleSubquery();
 
 		/** example con subconsutlas werhe in **/
-		exampleWhereIn();
+		//exampleWhereIn();
+
+		/** exmaple e consutas dinamicas con Specification **/
+		personService.search("Andres","Java").forEach(System.out::println);
 	}
 
 	private void exampleConcatUpperLowerLike() {
