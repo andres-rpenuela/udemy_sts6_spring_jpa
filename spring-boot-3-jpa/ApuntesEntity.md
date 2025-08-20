@@ -138,7 +138,7 @@ private Rol rol;
 
 ### 🔹 @Temporal
 
-Se usa con `java.util.Date` para especificar el tipo temporal.
+Se usa con **tipos antiguos** (`java.util.Date` o `java.util.Calendar`) para especificar cómo se mapearán en la BD:
 
 ```java
 @Temporal(TemporalType.DATE)   // solo fecha
@@ -147,8 +147,74 @@ Se usa con `java.util.Date` para especificar el tipo temporal.
 private Date fechaNacimiento;
 ```
 
+> Nota:
+> `@Temporal` ya no se usa con Java 8+ porque las nuevas clases (_LocalDate, LocalTime, LocalDateTime_) están soportadas directamente por JPA/Hibernate. 
+> En este caso, también podemos usar @DateTimeFormat de Spring para formateo en formularios/web.
 ---
 
+### 🔹 @DateTimeFormat
+
+Con Java 8, JPA/Hibernate soporta directamente las clases del paquete java.time:
+
+```java
+private LocalDate fechaNacimiento;     // YYYY-MM-DD
+private LocalTime horaRegistro;        // HH:mm:ss
+private LocalDateTime fechaCreacion;   // YYYY-MM-DD HH:mm:ss
+```
+👉 No necesitan @Temporal, ya que JPA entiende el tipo automáticamente.
+
+La anotación `@DateTimeFormat`, se usa para formatear entrada/salida en controladores Spring MVC (ej. formularios o JSON).
+*No cambia cómo se guarda en la BD, solo cómo se interpreta el valor recibido.
+
+```java
+@DateTimeFormat(pattern = "yyyy-MM-dd")
+private LocalDate fechaNacimiento;
+// Así, si un cliente envía "2025-08-19", Spring lo convierte automáticamente a LocalDate.
+
+@DateTimeFormat(pattern = "HH:mm:ss")
+private LocalTime horaRegistro;
+
+@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+private LocalDateTime fechaCreacion;
+```
+
+### @CreationTimestamp y @UpdateTimestamp
+
+Sirve para rellenar automáticamente un campo de fecha/hora con el valor actual de la base de datos cuando se hace un INSERT o UPDATE.
+
+Es útil para auditoría: campos como createdAt y updatedAt.
+
+Las anotaciones de Hibernate como @CurrentTimestamp, @CreationTimestamp y @UpdateTimestamp sí funcionan con los tipos de fecha y hora de Java 8 (LocalDate, LocalTime, LocalDateTime) además de java.util.Date o java.sql.Timestamp.
+
+* @CreationTimestamp
+  * Asigna la fecha/hora actual solo en el momento del INSERT.
+  * Ideal para createdAt.
+
+* @UpdateTimestamp
+  * Actualiza la fecha/hora en cada UPDATE.
+  * Ideal para updatedAt.
+
+* @CurrentTimestamp
+  * Puede usarse tanto en INSERT como en UPDATE.
+  * Se comporta similar a @CreationTimestamp pero más general.
+  * Requiere más control manual en algunos casos.
+
+```java
+   @CurrentTimestamp
+   private LocalDateTime createdAt;  // Fecha y hora actual
+
+   @CurrentTimestamp
+   private LocalDate createdDate;  // Solo fecha actual
+
+    @CurrentTimestamp
+    private LocalTime createdTime;  // Solo la hora
+
+```
+> Nota:
+> `@CurrentTimestamp` funciona con LocalDate, LocalTime y LocalDateTime.
+> Solo guarda la parte que corresponda según el tipo.
+
+ 
 ## 4. Relaciones entre entidades
 
 ### @OneToOne
@@ -347,11 +413,17 @@ public void postRemove() { System.out.println("Entidad eliminada"); }
 
 ### 🔹 Carga
 
-* **@PostLoad** → después de cargar desde la BD.
+* **@PostLoad** → después de cargar desde la BD., muy usado para inicilizar datos que no son persistidos (_aquellos anotados con @Transient_)
 
 ```java
+@Transient
+public String fullName;
+
 @PostLoad
-public void postLoad() { System.out.println("Entidad cargada: " + name); }
+public void postLoad() { 
+    this.fullName = this.name + " " + this.lastname;
+    System.out.println("Entidad cargada: " + fullName);
+}
 ```
 
 ---
