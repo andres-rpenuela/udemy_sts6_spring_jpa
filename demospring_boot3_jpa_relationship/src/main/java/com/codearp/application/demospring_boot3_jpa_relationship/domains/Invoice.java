@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Table(name="INVOICES")
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode
 public class Invoice {
 
     @Id
@@ -19,4 +19,22 @@ public class Invoice {
     private String description;
     private BigDecimal amount;
 
+    // Crea la FK en INVOICES, que es la tabla dueño
+    // Este atributo es opcional para crear una relacion bidirecional,
+    // es obligatorio que eixta en bbdd para tenga la relación CLIENTS ---* INVOICES
+    // INVOICES *--- Client
+    @ManyToOne // Muchos libros puede tener un cliente
+    @JoinColumn(name="client_id") // FK_client_id
+    private Client client;
+
+
+    @Override
+    public String toString() {
+        return "Invoice{" +
+                "id=" + id +
+                ", description='" + description + '\'' +
+                ", amount=" + amount +
+                ", client=" + client +
+                '}';
+    }
 }

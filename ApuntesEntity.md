@@ -229,16 +229,121 @@ private Passport passport;
 
 ### @OneToMany / @ManyToOne
 
-Una persona puede tener varios libros.
+**Relación uno a muchos / muchos a uno**.
+
+Ejemplo:
+- Una Persona puede tener muchos libros.
+- Cada Libro pertenece a una persona.
+
+👉 Eso en base de datos se traduce en que la tabla Book lleva una FK (person_id) que apunta a Person.
+
+> Nota: **¿Por qué no en Person?**
+> Si intentaras poner la FK en la tabla person para apuntar a muchos Book:
+> * Tendrías que meter una lista de IDs (book_ids) en una columna, algo que no existe en SQL relacional normalizado.
+> * O tendrías que crear una tabla intermedia, lo cual ya sería otra cosa (@ManyToMany).
+> 
+> Por eso, en un @OneToMany unidireccional, la FK siempre vive en la tabla de la entidad “muchos” (el hijo).
 
 ```java
+// en la clase "Inverso (mappedBy)"
 @OneToMany(mappedBy = "person")
 private List<Book> books;
 
+// en la clase "Dueño (owning side)"
+@ManyToOne
+@JoinColumn(name = "person_id") // FK_person_id
+private Person person;
+```
+
+Resumen gráfico:
+```
+ Person (id) 1 --- * Book (id, person_id)
+
+* Book.person = lado dueño (@ManyToOne).
+* Person.books = lado inverso (@OneToMany(mappedBy="person")).
+```
+
+En JPA, cuando defines una relación bidireccional, hay un dueño (**owing side**) de la relación (_el que tiene la FK en la tabla_) y un lado inverso (_mappedBy_) que solo refleja la relación.
+
+* Dueño (owning side) → el que tiene la FK (@ManyToOne).
+* Inverso (mappedBy) → el otro lado, que solo “mapea” la relación (@OneToMany(mappedBy=...)).
+
+
+#### ¿Que significa `mappedBy = "person"`?
+
+```java
+@Entity
+public class Person {
+    @Id @GeneratedValue
+    private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = "person")
+    private List<Book> books;
+}
+```
+
+El signficado desglosado sería:
+* **mappedBy** indica qué atributo en la otra entidad es el dueño de la relación.
+* _"person"_ se refiere al nombre del campo en _Book_ que tiene la anotación @ManyToOne.
+
+```java
+@Entity
+public class Book {
+    @Id @GeneratedValue
+    private Long id;
+    private String title;
+
+    @ManyToOne
+    @JoinColumn(name = "person_id") // aquí vive la FK, opcional
+    private Person person;
+}
+```
+Aquí, _Book.person_ es el dueño de la relación.
+Por eso en _Person_ escribimos _mappedBy = "person"_, para indicar que no se genere otra FK en Person.
+
+#### Por qué el @ManyToOne es opcional en el ejemplo?
+
+En el código:
+```java
+//El mappedBy en Person apunta al atributo person en Book, que es el dueño de la relación.
+@OneToMany(mappedBy = "person")
+private List<Book> books;
+
+// El @ManyToOne va en la entidad "hija" (Book) porque es donde se guarda la FK (person_id). (Opcional)
 @ManyToOne
 @JoinColumn(name = "person_id")
 private Person person;
 ```
+
+>En Person el **@OneToMany** solo tiene sentido si en Book existe el campo `private Person person`.
+>
+>Ese **@ManyToOne** en Book <ins>no es opcional realmente</ins>, es necesario para que exista la relación: sin él, no hay columna _person_id_ en la tabla Book.
+> 
+>Lo que pasa es que, si solo quieres modelar una relación unidireccional (Person → Book), podrías omitirlo y hacer algo como:
+>
+> ```java
+>   @Entity
+>   public class Person {
+>       @Id @GeneratedValue
+>       private Long id;
+>       private String name;
+>
+>       // ya no se usa `mappedBy`, no existe el cmapo en Book   
+>       @OneToMany
+>       @JoinColumn(name = "person_id") // FK en BOOK
+>       private List<Book> books;
+>   }
+>   
+>   @Entity
+>   public class Book {
+>       @Id @GeneratedValue
+>       private Long id;
+>       private String title;
+>   }
+> ```
+> En ese caso, la relación sería unidireccional (solo Person sabe sus Book), pero no puedes navegar desde Book hacia Person, creando Hibernate crea la FK person_id en la tabla BOOK.
+
 
 ### @ManyToMany
 
