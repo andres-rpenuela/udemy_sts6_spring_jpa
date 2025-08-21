@@ -24,7 +24,7 @@ public class Invoice {
     // es obligatorio que eixta en bbdd para tenga la relación CLIENTS ---* INVOICES
     // INVOICES *--- Client
     @ManyToOne // Muchos libros puede tener un cliente
-    @JoinColumn(name="client_id") // FK_client_id
+    @JoinColumn(name="client_id",nullable = false) // FK_client_id
     private Client client;
 
 
