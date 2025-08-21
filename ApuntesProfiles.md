@@ -1,0 +1,162 @@
+# Configurar Perfiles en Spring
+
+Añadir en el pom.xml
+
+```xml
+    <!-- ... -->
+    <build>
+        <!-- ... -->
+
+        <!-- habilitar el "resource filtering" en Maven, para los perfiles -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <spring.profiles.active>dev</spring.profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <id>test</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spring.profiles.active>test</spring.profiles.active>
+            </properties>
+        </profile>
+    </profiles>
+    </project>
+```
+`
+Crear los siguientes ficheros en `src/resources`: 
+ * application.properties
+ * application-dev.properties
+ * application-test.properties
+
+> Nota: se puede usar la configuracion `.yml`
+
+
+```properties
+# application.properties
+
+#Es una propiedad de Maven que se reemplaza en tiempo de compilación a partir de tu pom.xml.
+# mvn spring-boot:run -Pdev > Maven reemplaza @spring.profiles.active@ por dev.
+# mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# java -jar app.jar --spring.profiles.active=dev
+spring.profiles.active=@spring.profiles.active@
+```
+
+
+```properties
+# application-dev.properties
+
+spring.application.name=spring-boot-3-jpa-relationship
+server.port=8082
+
+############
+##  BBDD  ##
+############
+spring.jpa.properties.hibernate.connection.useUnicode=true
+spring.jpa.properties.hibernate.connection.characterEncoding=utf-8
+spring.jpa.properties.hibernate.connection.charSet=utf-8
+
+spring.datasource.url=jdbc:mysql://localhost:3306/testdb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.username=root
+spring.datasource.password=root
+
+# Dialecto de Hibernate para MySQL
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+
+# forzar a Hibernate a respetar el nombre exacto
+# Con esto Hibernate usará exactamente lo que pongas en @Table(name="CLIENTS").
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+
+# Estrategia de DDL (ajústala según tu necesidad)
+# create, create-drop, update, validate
+spring.jpa.hibernate.ddl-auto=create-drop
+
+
+# show queries in logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.springframework.jdbc.datasource.init.ScriptUtils=DEBUG
+logging.level.org.hibernate.orm.jdbc.bind=TRACE
+
+
+# "src/main/resources/*.sql" is load automatically
+#This aligns the script-based initialization with other database migration tools such as Flyway and Liquibase
+# controla cuándo se cargan los scripts.
+spring.jpa.defer-datasource-initialization=true
+
+# Controla si Spring Boot ejecuta los scripts SQL (schema.sql, data.sql, *-mysql.sql, etc.) al iniciar.
+# embedded -> Solo si la base de datos es en memoria (Defautl)
+# always -> Ejecuta los scripts siempre, sin importar si la BD es embebida o externa (ej: MySQL, Postgres).
+# never -> Nunca ejecuta los scripts, aunque existan. (Se usa cuando prefieres gestionar la BD con Flyway/Liquibase o manualmente.)
+spring.sql.init.mode=always
+
+
+# controla qué archivos SQL se buscan *-h2.sql
+spring.sql.init.platform=mysql
+```
+
+```properties
+# application-test.properties
+
+spring.application.name=spring-boot-3-jpa-relationship
+server.port=8082
+
+############
+##  BBDD  ##
+############
+spring.jpa.properties.hibernate.connection.useUnicode=true
+spring.jpa.properties.hibernate.connection.characterEncoding=utf-8
+spring.jpa.properties.hibernate.connection.charSet=utf-8
+
+spring.datasource.url=jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_UPPER=false;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=sa
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+# create, create-drop, update, validate
+spring.jpa.hibernate.ddl-auto=create-drop
+
+# forzar a Hibernate a respetar el nombre exacto
+# Con esto Hibernate usará exactamente lo que pongas en @Table(name="CLIENTS").
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+spring.h2.console.settings.trace=false
+spring.h2.console.settings.web-allow-others=false
+
+# show queries in logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.springframework.jdbc.datasource.init.ScriptUtils=DEBUG
+logging.level.org.hibernate.orm.jdbc.bind=TRACE
+
+
+# "src/main/resources/*.sql" is load automatically
+#This aligns the script-based initialization with other database migration tools such as Flyway and Liquibase
+# controla cuándo se cargan los scripts.
+spring.jpa.defer-datasource-initialization=true
+
+# Controla si Spring Boot ejecuta los scripts SQL (schema.sql, data.sql, *-mysql.sql, etc.) al iniciar.
+# embedded -> Solo si la base de datos es en memoria (Defautl)
+# always -> Ejecuta los scripts siempre, sin importar si la BD es embebida o externa (ej: MySQL, Postgres).
+# never -> Nunca ejecuta los scripts, aunque existan. (Se usa cuando prefieres gestionar la BD con Flyway/Liquibase o manualmente.)
+spring.sql.init.mode=always
+
+
+# controla qué archivos SQL se buscan *-h2.sql
+spring.sql.init.platform=h2
+```
