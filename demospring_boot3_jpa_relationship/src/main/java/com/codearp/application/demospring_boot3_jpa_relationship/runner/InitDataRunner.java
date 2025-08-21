@@ -24,10 +24,12 @@ public class InitDataRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         manyToOne();
+        manyToOneAboutAClientExist();
     }
 
     /**
      * Ejemplo de codificaicon "ManyToOne"
+     * Crea un cliente nuevo y le asocia una factura nueva
      */
     @Transactional
     protected void manyToOne(){
@@ -45,5 +47,19 @@ public class InitDataRunner implements CommandLineRunner {
         System.out.println(invoice2); //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
     }
 
+    /**
+     * Ejemplo de codificaicon "ManyToOne"
+     * Busca un clinete existente en la BBDD y le asocia una factura nueva
+     */
+    @Transactional
+    protected void manyToOneAboutAClientExist(){
+        //1.  Crear el cliente
+        Client client = clientRepository.findById(1L).get();
 
+        //2.  Crear la factura y se referencia al cliente.
+        Invoice invoice = Invoice.builder().amount(BigDecimal.valueOf(20000)).client(client).build();
+        invoiceRepository.save(invoice);
+
+        System.out.println(invoice);  //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
+    }
 }

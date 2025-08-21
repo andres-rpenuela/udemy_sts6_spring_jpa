@@ -344,6 +344,26 @@ private Person person;
 > ```
 > En ese caso, la relación sería unidireccional (solo Person sabe sus Book), pero no puedes navegar desde Book hacia Person, creando Hibernate crea la FK person_id en la tabla BOOK.
 
+#### Ejemplo de codificaicón `ManyToOne`
+
+```java
+@Transactional
+    protected void manyToOne(){
+        //1.  Crear el cliente
+        Client client = Client.builder().name("Pedro").lastName("Sanchez").build();
+        clientRepository.save(client);
+
+        //2.  Crear la factura y se referencia al cliente.
+        Invoice invoice = Invoice.builder().amount(BigDecimal.valueOf(10000)).client(client).build();
+        Invoice invoice2 = invoiceRepository.save(invoice);
+
+        // son el miso objeto, y ambos tiene el id
+        // lo que indica que "save(entity)", modifica el parametro de entrada
+        System.out.println(invoice);  //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
+        System.out.println(invoice2); //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
+    }
+```
+
 
 ### @ManyToMany
 
@@ -359,6 +379,33 @@ Relación muchos a muchos con tabla intermedia.
 private List<Course> courses;
 ```
 
+### @JoinColumn
+La anotación @JoinColumn de JPA se usa para definir la columna que actúa como clave foránea en una relación entre entidades. Es muy común en relaciones @OneToOne, @ManyToOne y, en combinación con @OneToMany (_usualmente en el lado inverso_).
+
+```java
+@ManyToOne
+@JoinColumn(name = "client_id")
+private Client client;
+```
+>Aquí:
+>
+> - @ManyToOne: indica que muchos registros de la entidad actual apuntan a uno de Client.
+>
+> - @JoinColumn(name = "client_id"): indica que en la tabla >de la entidad actual existe una columna client_id que >será la FK hacia Client.id.
+>
+
+| Propiedad              | Tipo         | Descripción                                                                            | Ejemplo                                                                      |
+| ---------------------- | ------------ | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `name`                 | `String`     | Nombre de la columna de la tabla actual que contiene la FK                             | `@JoinColumn(name = "client_id")`                                            |
+| `referencedColumnName` | `String`     | Nombre de la columna en la tabla referenciada a la que apunta la FK (por defecto `id`) | `@JoinColumn(name="client_id", referencedColumnName="id")`                   |
+| `unique`               | `boolean`    | Si la columna debe ser única                                                           | `@JoinColumn(name="client_id", unique=true)`                                 |
+| `nullable`             | `boolean`    | Si la columna permite `NULL`                                                           | `@JoinColumn(name="client_id", nullable=false)`                              |
+| `insertable`           | `boolean`    | Si la columna se incluye en `INSERT`                                                   | `@JoinColumn(name="client_id", insertable=false)`                            |
+| `updatable`            | `boolean`    | Si la columna se incluye en `UPDATE`                                                   | `@JoinColumn(name="client_id", updatable=false)`                             |
+| `foreignKey`           | `ForeignKey` | Permite definir el comportamiento del FK (nombre, acciones `ON DELETE/UPDATE`)         | `@JoinColumn(name="client_id", foreignKey=@ForeignKey(name="FK_CLIENT_ID"))` |
+
+
+### @JoinTable
 ---
 
 ## 5. Estrategias de herencia en JPA
