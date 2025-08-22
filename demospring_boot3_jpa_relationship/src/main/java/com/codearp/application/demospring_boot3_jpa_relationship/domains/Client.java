@@ -3,6 +3,7 @@ package com.codearp.application.demospring_boot3_jpa_relationship.domains;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,7 +25,16 @@ public class Client {
     // Relacion bidireciconal
     // ClIENT ----* INVOICES
     @OneToMany(mappedBy = "client")
-    public List<Invoice> invoices;
+    @Builder.Default
+    public List<Invoice> invoices = new ArrayList<>();
+
+    // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no eixte una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
+    // CLIENT ----* ADDRESSES
+    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true) // crea una tabla intermedia gestionada por hiberante
+    //@OneToMany(mappedBy = "client") // debe esiste el Cliente client y debe ser un @ManyToOne
+    //@JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES
+    @Builder.Default
+    public List<Address> addresses = new ArrayList<>();
 
     @Override
     public String toString() {
@@ -34,11 +44,4 @@ public class Client {
                 ", lastName='" + lastName + '\'' +
                 '}';
     }
-
-    // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no eixte una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
-    // CLIENT ----* ADDRESSES
-    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true) // crea una tabla intermedia gestionada por hiberante
-    //@OneToMany(mappedBy = "client") // debe esiste el Cliente client y debe ser un @ManyToOne
-    @JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES
-    private List<Address> addresses;
 }

@@ -364,7 +364,43 @@ private Person person;
     }
 ```
 
+#### @OneToMany
 
+La anotación `@OneToMany` se usa cuando **una entidad (padre)** puede estar relacionada con **muchas entidades hijas** (_de uno a muchos_).
+
+| Estrategia                         | Qué crea JPA                                                   |
+| ---------------------------------- | -------------------------------------------------------------- |
+| **Sin `mappedBy` ni `JoinColumn`** | Una **tabla intermedia** `CLIENT_ADDRESSES`                    |
+| **Con `mappedBy`**                 | FK en `Address` → `client_id` (más usado en bidireccional)     |
+| **Con `@JoinColumn`**              | FK en `Address`, pero definida desde `Client` (unidireccional) |
+
+
+Ejemplo:
+
+```java
+// client.java
+
+    // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no eixte una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
+    // CLIENT ----* ADDRESSES
+    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true)`// crea una tabla intermedia
+    //@OneToMany(mappedBy = "client") // debe existir el Cliente client y debe ser un @ManyToOne
+    //@JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES, si neceisada de crar client.
+    private List<Address> addresses;
+```
+
+> Algunas propieades útiles:
+> 
+> - cascade = CascadeType.ALL
+> → Todas las operaciones (persist, merge, remove, etc.) se propagan a las entidades hijas.
+> 
+> - orphanRemoval = true
+> → Si se elimina un objeto de la lista, se elimina también en la BD.
+> 
+> - mappedBy
+> → Indica que la relación se gestiona desde el lado hijo (@ManyToOne).
+> 
+> - @JoinColumn(name = "...")
+> → Define la FK directamente en la tabla hija.
 ### @ManyToMany
 
 Relación muchos a muchos con tabla intermedia.

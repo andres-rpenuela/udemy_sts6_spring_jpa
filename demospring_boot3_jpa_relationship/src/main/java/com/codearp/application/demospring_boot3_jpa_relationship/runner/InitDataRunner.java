@@ -1,5 +1,6 @@
 package com.codearp.application.demospring_boot3_jpa_relationship.runner;
 
+import com.codearp.application.demospring_boot3_jpa_relationship.domains.Address;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Client;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Invoice;
 import com.codearp.application.demospring_boot3_jpa_relationship.repositories.ClientRepository;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -23,8 +27,9 @@ public class InitDataRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        manyToOne();
-        manyToOneAboutAClientExist();
+        //manyToOne();
+        //manyToOneAboutAClientExist();
+        oneToMany();
     }
 
     /**
@@ -61,5 +66,22 @@ public class InitDataRunner implements CommandLineRunner {
         invoiceRepository.save(invoice);
 
         System.out.println(invoice);  //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
+    }
+
+    /**
+     * Ejempolo de codificaicon "OneToMany"
+     * Crea un cliente con direcciones, y se crea el cliente aprovechadno el Cascade.ALL, para crear la direccion.
+     */
+    @Transactional
+    protected void oneToMany(){
+
+        Address address = Address.builder().street("Avd. Canxas").number(3).build();
+        Client client = Client.builder().name("Perico").lastName("Rojas").build();
+
+        client.getAddresses().add(address);
+
+        clientRepository.save(client);
+        System.out.println(client);
+        client.getAddresses().forEach(System.out::println);
     }
 }
