@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.Arrays;
 
 @Component
 @Slf4j
@@ -27,9 +25,13 @@ public class InitDataRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        // ### EXAMPLE ManyToOne() (Bidireccional) ###
         //manyToOne();
         //manyToOneAboutAClientExist();
+
+        // ### EXAMPLE OneToMany() ###
         oneToMany();
+        oneToManyAboutAClientExist();
     }
 
     /**
@@ -84,4 +86,31 @@ public class InitDataRunner implements CommandLineRunner {
         System.out.println(client);
         client.getAddresses().forEach(System.out::println);
     }
+
+    /**
+     * Ejempolo de codificaicon "OneToMany" sobre un Cliente existente
+     * Crea un cliente con direcciones, y se crea el cliente aprovechadno el Cascade.ALL, para crear la direccion.
+     */
+    @Transactional
+    public void oneToManyAboutAClientExist() {
+
+        // findById es detached, lo que se recomienda es hacer feth join
+        clientRepository.findById(3L).ifPresent(client ->{
+                    Address address1 = Address.builder().street("Avd. Canxas").number(3).build();
+                    Address address2 = Address.builder().street("Avd. Florida").number(3).build();
+                    // como el findById finlaiza la sesión, al hacer un get de Address dará un error de Lazy
+                    // por lo que si no se trajo durante la sesión el objeto, el proxy no se podra inizilizar,
+                    // sin embargo se puede machar el valor
+                    client.setAddresses(Arrays.asList(address1,address2));
+
+                    // save no es necesario si el cliente ya está en el contexto de persistencia
+                    clientRepository.save(client);
+
+                    log.info("Cliente: {}", client);
+                    client.getAddresses().forEach(a -> log.info("Address: {}", a));
+                }
+        );
+
+    }
+
 }

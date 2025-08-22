@@ -374,6 +374,8 @@ La anotación `@OneToMany` se usa cuando **una entidad (padre)** puede estar rel
 | **Con `mappedBy`**                 | FK en `Address` → `client_id` (más usado en bidireccional)     |
 | **Con `@JoinColumn`**              | FK en `Address`, pero definida desde `Client` (unidireccional) |
 
+> **Importante**: @OneToMany por defecto es LAZY → Hibernate no carga la lista addresses hasta que se accede.
+
 
 Ejemplo:
 
@@ -401,6 +403,168 @@ Ejemplo:
 > 
 > - @JoinColumn(name = "...")
 > → Define la FK directamente en la tabla hija.
+
+##### 📌 Consieración sobre `@OneToMany` y Lazy Loading en Hibernate/Spring Data JPA
+
+###### 1. Comportamiento por defecto
+- En JPA/Hibernate, **`@OneToMany` es LAZY por defecto**:
+
+```java
+@OneToMany(mappedBy = "client")
+private List<Address> addresses;
+````
+
+* La lista `addresses` **no se carga automáticamente** al recuperar un `Client`.
+* Hibernate crea un **proxy** que solo se inicializa cuando se accede a la colección **dentro de una sesión activa**.
+
+---
+
+###### 2. Problema típico
+
+* Acceder a una colección lazy **fuera de la sesión** provoca:
+
+```
+org.hibernate.LazyInitializationException: could not initialize proxy - no Session
+```
+
+* Ejemplo típico:
+
+```java
+Client client = clientRepository.findById(3L).orElseThrow();
+List<Address> addresses = client.getAddresses(); // Falla si fuera de la sesión
+```
+
+---
+
+###### 3. Caso especial: `findById` devuelve detached
+
+* Importante: **el objeto `Client` devuelto por `findById` puede estar DETACHED**, dependiendo de la configuración del repositorio.
+* Habitualmente:
+
+  * **La sesión asociada al `Client` ya está cerrada**.
+  * Ni `Hibernate.initialize(client.getAddresses())` ni acceder a la colección forzará la carga.
+  * Acceder a lazy fuera de sesión genera **`LazyInitializationException`**.
+
+---
+
+###### 4. Soluciones recomendadas
+
+- Opción 1: Habilitar lazy load fuera de la sesión (no recomendada)
+
+```properties
+hibernate.enable_lazy_load_no_trans=true
+```
+
+> Permite inicializar proxies fuera de la sesión.
+ 
+>**No recomendado**, rompe consistencia y puede generar consultas N+1 inesperadas.
+
+---
+
+- Opción 2: Acceder dentro de un bloque `@Transactional`
+
+```java
+@Transactional(readOnly = true)
+public void loadClient() {
+    Client client = clientRepository.findById(3L).orElseThrow();
+    client.getAddresses().size(); // fuerza la carga
+}
+```
+
+> Garantiza que la colección se inicialice mientras la sesión está activa.
+
+> **No funciona si el objeto está detached**.
+
+---
+
+- Opción 3: Cambiar a `FetchType.EAGER`
+
+```java
+@OneToMany(fetch = FetchType.EAGER, mappedBy = "client")
+private List<Address> addresses;
+```
+
+> Trae siempre la colección al cargar el `Client`.
+
+> Útil solo si siempre se necesita la colección completa.
+
+> Puede afectar rendimiento si la colección es grande.
+
+---
+
+- Opción 4: Usar `JOIN FETCH` en JPQL
+
+```java
+@Query("SELECT c FROM Client c LEFT JOIN FETCH c.addresses WHERE c.id = :id")
+Optional<Client> findByIdWithAddresses(@Param("id") Long id);
+```
+
+> Permite traer `Client` con la colección `addresses` **ya inicializada**.
+
+> Evita problemas de lazy fuera de la sesión.
+
+---
+
+- Opción 5: Inicialización manual con Hibernate (dentro de la sesión activa)
+
+```java
+@Transactional
+public void initAddresses() {
+    Client client = clientRepository.findById(3L).orElseThrow();
+    Hibernate.initialize(client.getAddresses()); // funciona solo si la sesión está activa, puede que sea detached
+```
+
+> Solo funciona **dentro de la transacción**.
+
+> **No funciona** si el `Client` está detached, como ocurre con `findById` en algunos casos.
+
+---
+
+########### 5. Ejemplo práctico de manejo de una colección
+
+```java
+@Transactional
+public void oneToManyAboutAClientExist() {
+    clientRepository.findById(3L).ifPresent(client -> {
+        Address address1 = Address.builder().street("Avd. Canxas").number(3).build();
+        Address address2 = Address.builder().street("Avd. Florida").number(3).build();
+
+        // Machar directamente la lista de direcciones evita LazyInitializationException
+        client.setAddresses(Arrays.asList(address1, address2));
+
+        // No es necesario save si el cliente ya está en el contexto de persistencia
+        clientRepository.save(client);
+
+        log.info("Cliente: {}", client);
+        client.getAddresses().forEach(a -> log.info("Address: {}", a));
+    });
+}
+```
+
+**Claves del ejemplo:**
+
+* `findById` devuelve un `Client` detached.
+* Se reemplaza la colección (`setAddresses`) en lugar de inicializar el proxy lazy.
+* Evita errores de lazy loading.
+
+---
+
+##### 6. Buenas prácticas
+
+1. Mantener acceso a colecciones lazy **dentro de la transacción y sesión activa**.
+2. Preferir **JOIN FETCH** en consultas cuando se necesita la colección.
+3. Evitar `hibernate.enable_lazy_load_no_trans` en producción.
+4. Usar `FetchType.EAGER` solo si la colección se usa siempre.
+5. Para relaciones bidireccionales, mantener consistencia de ambos lados:
+
+```java
+address.setClient(client);
+client.getAddresses().add(address);
+```
+
+######################
+--- 
+
 ### @ManyToMany
 
 Relación muchos a muchos con tabla intermedia.

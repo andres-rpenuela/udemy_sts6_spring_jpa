@@ -32,7 +32,7 @@ public class Client {
     // CLIENT ----* ADDRESSES
     @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true) // crea una tabla intermedia gestionada por hiberante
     //@OneToMany(mappedBy = "client") // debe esiste el Cliente client y debe ser un @ManyToOne
-    //@JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES
+    @JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES
     @Builder.Default
     public List<Address> addresses = new ArrayList<>();
 
