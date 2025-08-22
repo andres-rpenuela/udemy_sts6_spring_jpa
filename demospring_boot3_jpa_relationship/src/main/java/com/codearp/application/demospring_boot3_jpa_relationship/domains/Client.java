@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name="CLIENTS")
@@ -37,12 +38,13 @@ public class Client {
 //    public List<Address> addresses = new ArrayList<>();
 
     // Crea una tabla intermida
-    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true) // Crea la direccion si no existe y no existe en otro cliente, Borrar la dirección si se queda huerfana, no se aconseja si una addres puede estar en varios clientes
+    //@OneToMany(cascade = CascadeType.ALL) // Crea la direción si no existe y no existe en otro cliente, Borra la relación pero no la direcicón, si se borra desde cliente
     @JoinTable(
             name = "CLIENTS_ADDRESSES",
             joinColumns = @JoinColumn(name="client_id"), // FK_client_id in Address (class target)
-            inverseJoinColumns = @JoinColumn(name="address_id"), //FK_address_id in Client (this class)
-            uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow mult-value in Address
+            inverseJoinColumns = @JoinColumn(name="address_id") //FK_address_id in Client (this class)
+            ,uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow am Address in more one Client (reforzar el uso de orphanRemoval = true)
     )
     @Builder.Default
     public List<Address> addresses = new ArrayList<>();
@@ -54,5 +56,17 @@ public class Client {
                 ", name='" + name + '\'' +
                 ", lastName='" + lastName + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Client client)) return false;
+        return Objects.equals(id, client.id) && Objects.equals(name, client.name) && Objects.equals(lastName, client.lastName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, lastName);
     }
 }

@@ -453,9 +453,6 @@ clientRepository.findById(3L).ifPresent( client -> {
 });
 ```        
 
-
-
-
 ---
 
 ###### 3. Caso especial: `findById` devuelve detached
@@ -583,6 +580,169 @@ public void oneToManyAboutAClientExist() {
 address.setClient(client);
 client.getAddresses().add(address);
 ```
+##### 7. Operaciones de cascada.
+
+> Se aconsjea que las entidades implemente los méotods Equals & hasCode, que son usados para comparar instancias de este tipo en las colleciones.
+
+Ejemplo común:
+
+```java
+@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+@JoinTable(
+    name = "CLIENTS_ADDRESSES",
+    joinColumns = @JoinColumn(name="client_id"),           // FK hacia Client
+    inverseJoinColumns = @JoinColumn(name="address_id"),   // FK hacia Address
+    uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // evita que la misma Address se asocie a varios clientes
+)
+@Builder.Default
+public List<Address> addresses = new ArrayList<>();
+```
+
+Con:
+```java
+    uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // 👈 culpable
+```
+
+* Ese uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) le dice a la BD:
+    > “cada address_id solo puede aparecer una vez en la tabla intermedia”.
+
+* Es decir, una dirección no puede pertenecer a más de un cliente.
+* Pero en tu código estás asociando address1 y address2 tanto al cliente 3L como al cliente 2L.
+* Resultado → al segundo save intenta insertar (client_id=2, address_id=1) y la BD lo bloquea porque address_id=1 ya estaba asociado al cliente 3.
+
+En este caso entonces, el `orphanRemoval = true`, tiene sentido para no dejar huerfanos, y no se podrá crear la dirección y luego el cliente, debe gestionarlo Hiberane, al usar: `cascade = CascadeType.ALL`.
+
+---
+
+1. **Relación `@OneToMany` con `@JoinTable`**
+
+* Existe una **tabla intermedia (`CLIENTS_ADDRESSES`)** que une `Client` ↔ `Address`.
+* Cada registro en esa tabla representa la relación.
+* Con `uniqueConstraints` sobre `address_id`, se asegura que **una dirección solo puede pertenecer a un cliente**.
+
+
+**Importante**
+
+En JPA, cuando usas** @OneToMany** con **@JoinTable**, semánticamente significa:
+
+> "Un cliente tiene muchas direcciones, y cada dirección pertenece a un único cliente".
+
+O sea, la cardinalidad real es 1:N, no N:M (**@ManyToMany.**).
+
+---
+
+2. **Cascada (`CascadeType.ALL`)**
+
+* Todas las operaciones que hagas sobre `Client` se propagan a `Address`:
+
+  * `persist` → guarda también las direcciones.
+  * `merge` → actualiza las direcciones.
+  * `remove` → borra las direcciones asociadas (si no están compartidas).
+
+---
+
+3. **`orphanRemoval = true`**
+
+* Cuando eliminas un objeto hijo de la colección (`addresses.remove(...)`), **Hibernate detecta que la dirección quedó huérfana** y la elimina de la BD.
+* Aplica tanto si quitas un elemento de la lista como si reasignas la colección completa.
+
+Ejemplo:
+
+```java
+client.getAddresses().remove(address1);
+// Hibernate genera:
+// DELETE FROM CLIENTS_ADDRESSES WHERE client_id = ? AND address_id = ?
+// DELETE FROM ADDRESS WHERE id = ?
+```
+
+---
+
+4. **Operaciones comunes**
+
+| Operación en la lista `addresses`    | Efecto en la tabla intermedia `CLIENTS_ADDRESSES`     | Efecto en tabla `ADDRESS` (por orphanRemoval)       |
+| ------------------------------------ | ----------------------------------------------------- | --------------------------------------------------- |
+| `client.getAddresses().add(addr)`    | INSERT en `CLIENTS_ADDRESSES`                         | INSERT en `ADDRESS` (si es nuevo)                   |
+| `client.getAddresses().remove(addr)` | DELETE en `CLIENTS_ADDRESSES`                         | DELETE en `ADDRESS`                                 |
+| `client.setAddresses(newList)`       | Borra todas las relaciones anteriores y crea nuevas   | Borra las direcciones antiguas que quedan huérfanas |
+| `clientRepository.delete(client)`    | Borra cliente y sus relaciones en `CLIENTS_ADDRESSES` | Borra todas las direcciones asociadas               |
+
+---
+
+5. **Diferencia sin `orphanRemoval`**
+
+* Si **no pones `orphanRemoval = true`**:
+
+  * `addresses.remove(...)` solo borra de la tabla intermedia (`CLIENTS_ADDRESSES`), **pero deja la fila en `ADDRESS`**.
+  * Es decir, la dirección no desaparece, solo se “desasocia”.
+
+--- 
+
+6. **Que pasa si:** *“una dirección puede estar en dos clientes”*
+
+> 👉 Eso **cambia completamente la recomendación** sobre `orphanRemoval`.
+> 
+
+Si:
+
+* `orphanRemoval = true` significa:
+  *“si la entidad hija deja de estar en la colección del padre, Hibernate la borra de la BD”*.
+
+* Entonces, si **una `Address` está asociada a varios `Client`** y borras la relación desde un cliente:
+
+  ```java
+  client1.getAddresses().remove(addressX);
+  ```
+
+* Hibernate intentará **borrar `addressX` de la tabla `ADDRESS`**, incluso aunque todavía esté asociada a `client2`.
+* ❌ Resultado: **datos inconsistentes** (te cargas la dirección usada por otro cliente).
+
+Qué se aconseja en este escenario:
+
+Si una `Address` puede estar asociada a **más de un cliente**:
+
+1. **NO uses `orphanRemoval = true`.**
+
+   * En este caso, la dirección **no depende de un solo cliente**, así que no debería borrarse automáticamente al quitarla de la lista.
+   * Lo correcto es que solo se elimine la fila de la **tabla intermedia `CLIENTS_ADDRESSES`**.
+
+2. Maneja las **eliminaciones explícitas**:
+
+   * Si realmente quieres borrar una dirección de la tabla `ADDRESS`, primero asegúrate de que ya no está asociada a ningún cliente.
+   * Eso lo puedes hacer con lógica de negocio o con una restricción en BD (`ON DELETE CASCADE` / `ON DELETE RESTRICT`).
+
+3. **Ejemplo recomendado:**
+
+   ```java
+   @OneToMany(cascade = CascadeType.ALL) // sin orphanRemoval y UniqueConstraint
+   @JoinTable(
+       name = "CLIENTS_ADDRESSES",
+       joinColumns = @JoinColumn(name="client_id"),
+       inverseJoinColumns = @JoinColumn(name="address_id")
+   )
+   private List<Address> addresses;
+   ```
+
+   * Quitar `orphanRemoval = true`.
+   * Esto asegura que si quitas una dirección de un cliente, **solo se borra la relación**, no la dirección entera.
+
+En resumen
+
+| Caso                                      | ¿Usar `orphanRemoval`? | Justificación                                                                                      |
+| ----------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| **Address pertenece solo a un Client**    | ✅ Sí                   | Address no tiene sentido sin su Client → se elimina.                                               |
+| **Address puede estar en varios Clients** | ❌ No                   | Una dirección no debe eliminarse al salir de una colección, puede estar asociada a otros clientes. |
+
+--- 
+7. **Buenas prácticas**
+
+1. Usa `orphanRemoval = true` cuando el hijo **no debe existir sin el padre** (ej: `Address` siempre pertenece a un `Client`).
+2. Evita `orphanRemoval` si las entidades hijas pueden estar **referenciadas por otras entidades**.
+3. Recuerda que `uniqueConstraints` ya impide que la misma dirección se comparta → esto refuerza el caso de uso de `orphanRemoval`.
+4. Ten cuidado con `setAddresses(new ArrayList<>())`: se borrarán **todas** las direcciones en cascada.
+
+---
+
+
 
 --- 
 

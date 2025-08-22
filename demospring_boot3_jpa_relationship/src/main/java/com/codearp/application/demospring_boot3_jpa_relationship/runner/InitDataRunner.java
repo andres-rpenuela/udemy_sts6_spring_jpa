@@ -32,10 +32,11 @@ public class InitDataRunner implements CommandLineRunner {
         //manyToOneAboutAClientExist();
 
         // ### EXAMPLE OneToMany() ###
-        oneToMany();
-        oneToManyAboutAClientExist();
+        //oneToMany();
+        //oneToManyAboutAClientExist();
 
         // Example remove OneToMany(casacade= Cascade.All )
+        //oneToManyAddressesShared(); // Metodo no permteidio, relación 1 <-> N
         removeInOneToMany();
     }
 
@@ -118,8 +119,62 @@ public class InitDataRunner implements CommandLineRunner {
 
     }
 
+    /**
+     * Método no permitido,
+     * por que una un cliente puede tener muchas direcciones, pero una direcicón solo un cliente
+     * entonces es una relación 1 <-> N, no de N <-> N
+      */
+//    @Transactional
+//    public void oneToManyAddressesShared(){// Requiere comentar:             //,uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow am Address in more one Client
+//
+//        Address address1 = Address.builder().street("Avd. Canxas").number(3).build();
+//        Address address2 = Address.builder().street("Avd. Florida").number(3).build();
+//        Address address3 = Address.builder().street("Avd. Florida").number(4).build();
+//
+//        // requiere equlas y hasCode, si no en cada save crea objetos diferntes
+//        addressRepository.saveAll( Arrays.asList(address1,address2) );
+//
+//        clientRepository.findById(2L).ifPresent(client ->{
+//            client.setAddresses(Arrays.asList(address1,address2));
+//
+//            // save no es necesario si el cliente ya está en el contexto de persistencia
+//            clientRepository.save(client);
+//
+//            log.info("Cliente: {}", client);
+//            client.getAddresses().forEach(a -> log.info("Address: {}", a));
+//        });
+//
+//        clientRepository.findById(3L).ifPresent(client ->{
+//            client.setAddresses(Arrays.asList(address1,address3));
+//
+//            // save no es necesario si el cliente ya está en el contexto de persistencia
+//            clientRepository.save(client);
+//
+//            log.info("Cliente: {}", client);
+//            client.getAddresses().forEach(a -> log.info("Address: {}", a));
+//        });
+//    }
+
     @Transactional
     public void removeInOneToMany(){
+        clientRepository.findById(3L).ifPresent(client ->{
+                    Address address1 = Address.builder().street("Avd. Canxas").number(3).build();
+                    Address address2 = Address.builder().street("Avd. Florida").number(3).build();
+                    // como el findById finlaiza la sesión, al hacer un get de Address dará un error de Lazy
+                    // por lo que si no se trajo durante la sesión el objeto, el proxy no se podra inizilizar,
+                    // sin embargo se puede machar el valor
+                    client.setAddresses(Arrays.asList(address1,address2));
+
+                    // save no es necesario si el cliente ya está en el contexto de persistencia
+                    clientRepository.save(client);
+
+                    log.info("Cliente: {}", client);
+                    client.getAddresses().forEach(a -> log.info("Address: {}", a));
+                }
+        );
+
+        // REMOVE
+
         // JdbcSQLIntegrityConstraintViolationException: Violaci�n de una restricci�n de Integridad Referencial: "FKdotrmv9mkkqiclhp5iv35dggw: PUBLIC.CLIENTS_ADDRESSES FOREIGN KEY(address_id) REFERENCES PUBLIC.ADDRESSES(id) (CAST(1 AS BIGINT))"
         // Referential integrity constraint violation: "FKdotrmv9mkkqiclhp5iv35dggw: PUBLIC.CLIENTS_ADDRESSES FOREIGN KEY(address_id) REFERENCES PUBLIC.ADDRESSES(id) (CAST(1 AS BIGINT))"; SQL statement:
         // addressRepository.deleteById(1L);
@@ -131,6 +186,7 @@ public class InitDataRunner implements CommandLineRunner {
         // PERO EN UNA DE CONSOLA (ESTAMOS EN EL CONTEXTO COMMANLINERUNNER SI PASA (TRATA CADA OPERACIÓN DE FORMA ATÓMICA)
         // PARA SOLUCIONARLO HEMOS USADO: spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
         clientRepository.findById(3L).ifPresent( client -> {
+            // elimina la relación y si 'orphanRemoval = true' la dirección si no, la deja huerfana
             client.getAddresses().removeFirst();
             clientRepository.save(client);
         });
