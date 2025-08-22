@@ -3,6 +3,7 @@ package com.codearp.application.demospring_boot3_jpa_relationship.runner;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Address;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Client;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Invoice;
+import com.codearp.application.demospring_boot3_jpa_relationship.repositories.AddressRepository;
 import com.codearp.application.demospring_boot3_jpa_relationship.repositories.ClientRepository;
 import com.codearp.application.demospring_boot3_jpa_relationship.repositories.InvoiceRepository;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class InitDataRunner implements CommandLineRunner {
     private final ClientRepository clientRepository;
 
     private final InvoiceRepository invoiceRepository;
+    private final AddressRepository addressRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -32,6 +34,9 @@ public class InitDataRunner implements CommandLineRunner {
         // ### EXAMPLE OneToMany() ###
         oneToMany();
         oneToManyAboutAClientExist();
+
+        // Example remove OneToMany(casacade= Cascade.All )
+        removeInOneToMany();
     }
 
     /**
@@ -110,6 +115,28 @@ public class InitDataRunner implements CommandLineRunner {
                     client.getAddresses().forEach(a -> log.info("Address: {}", a));
                 }
         );
+
+    }
+
+    @Transactional
+    public void removeInOneToMany(){
+        // JdbcSQLIntegrityConstraintViolationException: Violaci�n de una restricci�n de Integridad Referencial: "FKdotrmv9mkkqiclhp5iv35dggw: PUBLIC.CLIENTS_ADDRESSES FOREIGN KEY(address_id) REFERENCES PUBLIC.ADDRESSES(id) (CAST(1 AS BIGINT))"
+        // Referential integrity constraint violation: "FKdotrmv9mkkqiclhp5iv35dggw: PUBLIC.CLIENTS_ADDRESSES FOREIGN KEY(address_id) REFERENCES PUBLIC.ADDRESSES(id) (CAST(1 AS BIGINT))"; SQL statement:
+        // addressRepository.deleteById(1L);
+
+        // operation allow, because remove use in client
+        // but error: ailed to lazily initialize a collection of role: com.codearp.application.demospring_boot3_jpa_relationship.domains.Client.addresses
+        // NOTA:
+        // ESTE ERROR NO PASA EN UNA APLICACIÓN WEB SI SE ANOTA CON TRANSANCIONAL Y NO SE CIERRA LA SESIÓN
+        // PERO EN UNA DE CONSOLA (ESTAMOS EN EL CONTEXTO COMMANLINERUNNER SI PASA (TRATA CADA OPERACIÓN DE FORMA ATÓMICA)
+        // PARA SOLUCIONARLO HEMOS USADO: spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+        clientRepository.findById(3L).ifPresent( client -> {
+            client.getAddresses().removeFirst();
+            clientRepository.save(client);
+        });
+
+        // Ok remove client + address
+        //clientRepository.deleteById(3L);
 
     }
 

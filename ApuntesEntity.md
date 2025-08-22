@@ -434,6 +434,28 @@ Client client = clientRepository.findById(3L).orElseThrow();
 List<Address> addresses = client.getAddresses(); // Falla si fuera de la sesión
 ```
 
+Este problema es muy común que se de en aplicaiocnes de consola que usan jpa
+
+* Ejemplo
+```java
+// class que implementa CommandLineRunner
+
+// operation allow, because remove use in client
+// but error: ailed to lazily initialize a collection of role: com.codearp.application.demospring_boot3_jpa_relationship.domains.Client.addresses
+// NOTA:
+// ESTE ERROR NO PASA EN UNA APLICACIÓN WEB SI SE ANOTA CON TRANSANCIONAL Y NO SE CIERRA LA SESIÓN
+// PERO EN UNA DE CONSOLA (ESTAMOS EN EL CONTEXTO COMMANLINERUNNER SI PASA (TRATA CADA OPERACIÓN DE FORMA ATÓMICA)
+// PARA SOLUCIONARLO HEMOS USADO: spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+clientRepository.findById(3L).ifPresent( client -> {
+    // el get es otra consulta
+    client.getAddresses().removeFirst();
+    clientRepository.save(client);
+});
+```        
+
+
+
+
 ---
 
 ###### 3. Caso especial: `findById` devuelve detached
