@@ -520,7 +520,7 @@ public void initAddresses() {
 
 ---
 
-########### 5. Ejemplo práctico de manejo de una colección
+###### 5. Ejemplo práctico de manejo de una colección
 
 ```java
 @Transactional
@@ -562,7 +562,6 @@ address.setClient(client);
 client.getAddresses().add(address);
 ```
 
-######################
 --- 
 
 ### @ManyToMany
@@ -578,6 +577,8 @@ Relación muchos a muchos con tabla intermedia.
 )
 private List<Course> courses;
 ```
+
+---
 
 ### @JoinColumn
 La anotación @JoinColumn de JPA se usa para definir la columna que actúa como clave foránea en una relación entre entidades. Es muy común en relaciones @OneToOne, @ManyToOne y, en combinación con @OneToMany (_usualmente en el lado inverso_).
@@ -605,7 +606,158 @@ private Client client;
 | `foreignKey`           | `ForeignKey` | Permite definir el comportamiento del FK (nombre, acciones `ON DELETE/UPDATE`)         | `@JoinColumn(name="client_id", foreignKey=@ForeignKey(name="FK_CLIENT_ID"))` |
 
 
+---
+
 ### @JoinTable
+
+`@JoinTable` se utiliza para **configurar la tabla intermedia** en relaciones:
+
+- **Muchos a muchos (`@ManyToMany`)**  
+- En algunos casos, **unidireccionales `@OneToMany`** si no se quiere poner la FK en la entidad hija.
+
+Permite definir explícitamente:
+
+* **Nombre de la tabla intermedia**.
+* **Columnas que actúan como clave foránea** para cada lado de la relación.
+* **Restricciones adicionales** como `unique`, `nullable` o `foreignKey`.
+
+---
+
+#### Sintaxis básica: @ManyToMany
+
+```java
+@ManyToMany
+@JoinTable(
+    name = "student_course",                     // Nombre de la tabla intermedia
+    joinColumns = @JoinColumn(name = "student_id"),       // FK hacia la entidad actual
+    inverseJoinColumns = @JoinColumn(name = "course_id")  // FK hacia la entidad opuesta
+)
+private List<Course> courses;
+````
+
+**Explicación:**
+
+| Elemento             | Significado                                                              |
+| -------------------- | ------------------------------------------------------------------------ |
+| `name`               | Nombre de la tabla intermedia                                            |
+| `joinColumns`        | Columnas que apuntan a la **entidad dueña** (lado actual de la relación) |
+| `inverseJoinColumns` | Columnas que apuntan a la **entidad inversa**                            |
+
+* La tabla intermedia normalmente contiene solo **FKs** y opcionalmente **otras columnas adicionales** si quieres atributos extra en la relación.
+
+---
+
+#### Ejemplo completo: @ManyToMany
+
+```java
+@Entity
+public class Student {
+    @Id @GeneratedValue
+    private Long id;
+    private String name;
+
+    @ManyToMany
+    @JoinTable(
+        name = "student_course",
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private List<Course> courses = new ArrayList<>();
+}
+
+@Entity
+public class Course {
+    @Id @GeneratedValue
+    private Long id;
+    private String title;
+
+    @ManyToMany(mappedBy = "courses")
+    private List<Student> students = new ArrayList<>();
+}
+```
+
+**Resultado en BD:**
+
+| Tabla `student_course` | student\_id | course\_id |
+| ---------------------- | ----------- | ---------- |
+| 1                      | 1           | 101        |
+| 2                      | 1           | 102        |
+| 3                      | 2           | 101        |
+
+---
+
+#### Sintaxis básica: @OneToMany unidireccional con @JoinTable
+
+```java
+@Entity
+public class Client {
+    @Id @GeneratedValue
+    private Long id;
+    private String name;
+
+    // Crea una tabla intermida
+    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+    @JoinTable(
+            name = "CLIENTS_ADDRESSES",
+            joinColumns = @JoinColumn(name="client_id"), // FK_client_id in Address (class target)
+            inverseJoinColumns = @JoinColumn(name="address_id"), //FK_address_id in Client (this class)
+            uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow mult-value in Address
+    )
+    @Builder.Default
+    public List<Address> addresses = new ArrayList<>();
+}
+
+@Entity
+public class Address {
+    @Id @GeneratedValue
+    private Long id;
+    private String street;
+}
+```
+
+**Explicación:**
+
+| Elemento             | Significado                                          |
+| -------------------- | ---------------------------------------------------- |
+| `name`               | Nombre de la tabla intermedia (`client_address`)     |
+| `joinColumns`        | Columnas que apuntan al **lado padre** (`client_id`) |
+| `inverseJoinColumns` | Columnas que apuntan al **lado hijo** (`address_id`) |
+
+* La tabla `client_address` contendrá pares `(client_id, address_id)` representando la relación.
+* Útil para relaciones **unidireccionales** donde no se desea modificar la entidad hija.
+
+---
+
+#### Diferencias clave: @ManyToMany vs @OneToMany + @JoinTable
+
+| Característica         | @ManyToMany                       | @OneToMany + @JoinTable              |
+| ---------------------- | --------------------------------- | ------------------------------------ |
+| Relación               | Muchos a muchos                   | Uno a muchos                         |
+| FK en entidad hija     | No directamente, tabla intermedia | No directamente, tabla intermedia    |
+| Bidireccional opcional | Sí (mappedBy)                     | No se usa mappedBy en unidireccional |
+| Tabla intermedia       | Obligatoria                       | Opcional (si no se usa mappedBy)     |
+
+---
+
+#### 🔹 Propiedades adicionales de @JoinTable
+
+| Propiedad            | Tipo                | Descripción                                  |
+| -------------------- | ------------------- | -------------------------------------------- |
+| `name`               | String              | Nombre de la tabla intermedia                |
+| `joinColumns`        | JoinColumn\[]       | Columnas de la entidad propietaria           |
+| `inverseJoinColumns` | JoinColumn\[]       | Columnas de la entidad inversa               |
+| `uniqueConstraints`  | UniqueConstraint\[] | Restricciones de unicidad sobre la tabla     |
+| `foreignKey`         | ForeignKey          | Define el nombre y comportamiento de las FKs |
+
+---
+
+#### Buenas prácticas
+
+1. Definir siempre **joinColumns** e **inverseJoinColumns** explícitamente.
+2. Usar `mappedBy` en el lado inverso para relaciones bidireccionales y evitar **tabla duplicada**.
+3. Para relaciones con atributos extra en la relación, crear una **entidad intermedia** en lugar de depender solo de `@JoinTable`.
+4. En **@OneToMany unidireccional**, usar tabla intermedia solo si no se desea FK en la entidad hija; de lo contrario, `mappedBy` con FK es más limpio.
+
 ---
 
 ## 5. Estrategias de herencia en JPA
@@ -830,12 +982,6 @@ public class Person {
         System.out.println("📥 PostLoad ejecutado para " + name);
     }
 }
-```
-
----
-
-✅ Con estas anotaciones se puede implementar **auditoría automática** (ej. `createdAt`, `updatedAt`) y gestionar acciones en cada transición del ciclo de vida.
-
 ```
 
 ---

@@ -30,9 +30,20 @@ public class Client {
 
     // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no eixte una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
     // CLIENT ----* ADDRESSES
-    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true) // crea una tabla intermedia gestionada por hiberante
-    //@OneToMany(mappedBy = "client") // debe esiste el Cliente client y debe ser un @ManyToOne
-    @JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES
+//    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true) // crea una tabla intermedia gestionada por hiberante
+//    //@OneToMany(mappedBy = "client") // debe esiste el Cliente client y debe ser un @ManyToOne
+//    @JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES
+//    @Builder.Default
+//    public List<Address> addresses = new ArrayList<>();
+
+    // Crea una tabla intermida
+    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+    @JoinTable(
+            name = "CLIENTS_ADDRESSES",
+            joinColumns = @JoinColumn(name="client_id"), // FK_client_id in Address (class target)
+            inverseJoinColumns = @JoinColumn(name="address_id"), //FK_address_id in Client (this class)
+            uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow mult-value in Address
+    )
     @Builder.Default
     public List<Address> addresses = new ArrayList<>();
 
