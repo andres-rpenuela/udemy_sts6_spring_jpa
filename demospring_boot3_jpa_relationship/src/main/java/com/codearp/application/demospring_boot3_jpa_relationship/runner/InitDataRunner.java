@@ -354,10 +354,12 @@ public class InitDataRunner implements CommandLineRunner {
         clientRepository.findById(3L).ifPresent(client -> {
             Invoice invoice = invoiceRepository.findById(1L).get();
 
-            //1. Elimina la factura de la lista de facturas del cliente:
-            client.getInvoices().removeIf(invoice1 -> invoice1.equals( invoice )); // elimina la factura del cliente
-            //2.Rompe la relación bidireccional:
-            invoice.setClient(null); // elimina la fk
+//            //1. Elimina la factura de la lista de facturas del cliente:
+//            client.getInvoices().removeIf(invoice1 -> invoice1.equals( invoice )); // elimina la factura del cliente
+//            //2.Rompe la relación bidireccional:
+//            invoice.setClient(null); // elimina la fk
+            client.removeInvoice(invoice);
+
 
             //3. Guarda el cliente y luego elimina la factura
             // Si Client.invoices tiene orphanRemoval = true y cascade = CascadeType.AL

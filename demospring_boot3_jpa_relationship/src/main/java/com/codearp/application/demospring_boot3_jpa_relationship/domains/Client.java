@@ -7,6 +7,7 @@ import org.hibernate.annotations.BatchSize;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <code>
@@ -127,6 +128,26 @@ public class Client {
         // 3️⃣ Retorna el mismo objeto Client
         // Permite encadenar llamadas como:
         // client.addInvoice(invoice1).addInvoice(invoice2);
+        return this;
+    }
+
+
+    public Client removeInvoice(Invoice invoice){
+        // 1️⃣ Remueve de la lista de facturas del cliente
+        // Se elimina cualquier factura que coincida con equals()
+        // Esto mantiene la colección "invoices" sincronizada en memoria
+        this.getInvoices().removeIf(field -> field.equals(invoice));
+
+        // 2️⃣ Rompe la relación bidireccional
+        // Esta línea solo es necesaria si la relación @OneToMany NO tiene:
+        // orphanRemoval = true y cascade = ALL
+        // Se asegura de que el invoice deje de apuntar a este cliente
+        Optional.ofNullable(invoice)
+                .filter(field -> this.equals(field.getClient()))
+                .ifPresent(field -> field.setClient(null));
+
+        // 3️⃣ Retorna el mismo cliente para permitir encadenamiento de métodos
+        // Ejemplo: client.removeInvoice(invoice1).removeInvoice(invoice2);
         return this;
     }
 }
