@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Table(name="INVOICES")
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = { "client"})
 public class Invoice {
 
     @Id

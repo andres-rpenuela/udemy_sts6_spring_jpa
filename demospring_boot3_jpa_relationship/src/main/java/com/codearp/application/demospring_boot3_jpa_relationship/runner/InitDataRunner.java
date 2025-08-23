@@ -31,7 +31,7 @@ public class InitDataRunner implements CommandLineRunner {
         // ### EXAMPLE ManyToOne() (Bidireccional) ###
         //manyToOne();
         //manyToOneAboutAClientExist();
-        manyToOneAboutAClientExistJoinProperties();
+        //manyToOneAboutAClientExistJoinProperties(); // ejemplo de join fecth con order_colum, y join con batchSize
 
         // ### EXAMPLE OneToMany() (Unidreccional) ###
         //oneToMany();
@@ -40,6 +40,9 @@ public class InitDataRunner implements CommandLineRunner {
         // ### EXAMPLE remove OneToMany(casacade= Cascade.All )
         //oneToManyAddressesShared(); // Metodo no permteidio, relación 1 <-> N
         //removeInOneToMany();
+
+        // ### EXAMPLE remove OneToMany bidireccional
+        removeInvoiceBidireccionalFindById();
     }
 
     /**
@@ -115,9 +118,9 @@ public class InitDataRunner implements CommandLineRunner {
     protected void manyToOneAboutAClientExist() {
         // 1️⃣ Recuperar un cliente existente de la base de datos
         // Esto devuelve un objeto Managed dentro de la sesión de Hibernate
-        // Client client = clientRepository.findById(1L).get(); // puede dar problemas de Lazy
+        Client client = clientRepository.findById(1L).get(); // puede dar problemas de Lazy (estamo en contexto de consola no de web ->"CommandLineRunner")
         //Client client = clientRepository.finOneWithInvoices(1L).get(); // devuevle cliente con facturas
-        Client client = clientRepository.findOne(1L).get(); // devuevle cliente con direcciones y facturas
+        //Client client = clientRepository.findOne(1L).get(); // devuevle cliente con direcciones y facturas (join fetch con order_column)
 
         // 2️⃣ Crear facturas y asignarlas directamente al cliente
         // La relación se establece asignando el cliente a la factura
@@ -333,6 +336,38 @@ public class InitDataRunner implements CommandLineRunner {
         // Prueba el @BatSize
         List<Client> clients = clientRepository.findInLazy(List.of(1L,2L,3L));
         clients.stream().map(Client::getInvoices).forEach(System.out::println);
+    }
+
+
+    @Transactional
+    public void removeInvoiceBidireccionalFindById(){
+        clientRepository.findById(3L).ifPresent(client -> {
+            Invoice invoice1 = Invoice.builder().amount(BigDecimal.valueOf(20000)).build();
+            Invoice invoice2 = Invoice.builder().amount(BigDecimal.valueOf(30000)).build();
+            Invoice invoice3 = Invoice.builder().amount(BigDecimal.valueOf(30000)).build();
+
+            client.addInvoice(invoice1).addInvoice(invoice2).addInvoice(invoice3);
+
+            clientRepository.save(client);
+        });
+
+        clientRepository.findById(3L).ifPresent(client -> {
+            Invoice invoice = invoiceRepository.findById(1L).get();
+
+            //1. Elimina la factura de la lista de facturas del cliente:
+            client.getInvoices().removeIf(invoice1 -> invoice1.equals( invoice )); // elimina la factura del cliente
+            //2.Rompe la relación bidireccional:
+            invoice.setClient(null); // elimina la fk
+
+            //3. Guarda el cliente y luego elimina la factura
+            // Si Client.invoices tiene orphanRemoval = true y cascade = CascadeType.AL
+            // y guardar el cliente, Hibernate eliminará automáticamente la factura de la BD.
+            // No es necesario llamar a invoiceRepository.delete(invoice) explícitamente
+            clientRepository.save(client);
+            invoiceRepository.delete(invoice);
+        });
+
+        clientRepository.findById(3L).map(Client::getInvoices).stream().forEach(System.out::println);
     }
 
 }
