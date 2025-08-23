@@ -70,4 +70,27 @@ public class Client {
     public int hashCode() {
         return Objects.hash(id, name, lastName);
     }
+
+    /**
+     * Agrega una factura al cliente, mantiene la relación bidireccional
+     * y retorna el cliente para permitir encadenamiento de métodos.
+     *
+     * @param invoice La factura que se quiere asociar con este cliente.
+     * @return El mismo objeto Client, permitiendo encadenar llamadas.
+     */
+    public Client addInvoice(Invoice invoice) {
+        // 1️⃣ Agrega la factura a la lista de facturas del cliente
+        // Esto asegura que la colección OneToMany en el lado "cliente" se actualice en memoria.
+        this.getInvoices().add(invoice);
+
+        // 2️⃣ Establece la relación inversa en la factura
+        // Esto asigna el cliente en el lado ManyToOne de la relación.
+        // Mantiene consistencia bidireccional y evita persistencia incompleta.
+        invoice.setClient(this);
+
+        // 3️⃣ Retorna el mismo objeto Client
+        // Permite encadenar llamadas como:
+        // client.addInvoice(invoice1).addInvoice(invoice2);
+        return this;
+    }
 }

@@ -28,8 +28,8 @@ public class InitDataRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // ### EXAMPLE ManyToOne() (Bidireccional) ###
-        manyToOne();
-        //manyToOneAboutAClientExist();
+        //manyToOne();
+        manyToOneAboutAClientExist();
 
         // ### EXAMPLE OneToMany() (Unidreccional) ###
         //oneToMany();
@@ -110,16 +110,65 @@ public class InitDataRunner implements CommandLineRunner {
      * Busca un clinete existente en la BBDD y le asocia una factura nueva
      */
     @Transactional
-    protected void manyToOneAboutAClientExist(){
-        //1.  Crear el cliente
+    protected void manyToOneAboutAClientExist() {
+        // 1️⃣ Recuperar un cliente existente de la base de datos
+        // Esto devuelve un objeto Managed dentro de la sesión de Hibernate
         Client client = clientRepository.findById(1L).get();
 
-        //2.  Crear la factura y se referencia al cliente.
-        Invoice invoice = Invoice.builder().amount(BigDecimal.valueOf(20000)).client(client).build();
-        invoiceRepository.save(invoice);
+        // 2️⃣ Crear facturas y asignarlas directamente al cliente
+        // La relación se establece asignando el cliente a la factura
+        // NOTA: Aquí aún no se actualiza la colección del cliente automáticamente
+        Invoice invoice1 = Invoice.builder()
+                .amount(BigDecimal.valueOf(20000))
+                .client(client) // asigna el cliente a la factura
+                .build();
+        Invoice invoice2 = Invoice.builder()
+                .amount(BigDecimal.valueOf(30000))
+                .client(client)
+                .build();
 
-        System.out.println(invoice);  //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
+        // Guardar las facturas en la BD
+        invoiceRepository.save(invoice1);
+        invoiceRepository.save(invoice2);
+
+        // 🔹 Diferencia: la colección client.getInvoices() todavía no refleja invoice1 ni invoice2
+        // porque no se agregó manualmente a la lista de facturas del cliente
+        System.out.println("Facturas del cliente (antes de usar addInvoice): " + client.getInvoices());
+
+        // 3️⃣ Crear facturas usando el método addInvoice() de la entidad
+        // Esto asegura que la relación bidireccional se mantiene en ambos lados
+        Invoice invoice3 = Invoice.builder()
+                .amount(BigDecimal.valueOf(20000))
+                .build(); // No se asigna cliente directamente
+
+        Invoice invoice4 = Invoice.builder()
+                .amount(BigDecimal.valueOf(30000))
+                .build();
+
+        // addInvoice() hace dos cosas:
+        // 1. Agrega la factura a la lista de facturas del cliente
+        // 2. Asigna el cliente a la factura
+        client.addInvoice(invoice3).addInvoice(invoice4);
+
+        // Guardar estas nuevas facturas en la BD
+        invoiceRepository.save(invoice3);
+        invoiceRepository.save(invoice4);
+
+        // 4️⃣ Resultados finales
+        // invoice1 e invoice2 tienen cliente asignado, pero client.getInvoices() solo tiene invoice3 e invoice4
+        // invoice3 e invoice4 están correctamente asociados bidireccionalmente
+        // pero al guardar invoice1 y invoice2 dentro de la misma transacción:
+        //      Hibernate sincroniza el estado de todas las entidades Managed al hacer flush.
+        // esto implica que la colección client.getInvoices() se actualiza automáticamente
+        System.out.println("Invoice1: " + invoice1);
+        System.out.println("Invoice2: " + invoice2);
+        System.out.println("Invoice3: " + invoice3);
+        System.out.println("Invoice4: " + invoice4);
+
+        // Las facturas reflejadas en la colección del cliente:
+        System.out.println("Facturas del cliente (después de addInvoice): " + client.getInvoices());
     }
+
 
     /**
      * Ejempolo de codificaicon "OneToMany"
