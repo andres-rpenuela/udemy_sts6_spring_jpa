@@ -23,9 +23,10 @@ public class Client {
     @Column(name="LAST_NAME")
     private String lastName;
 
-    // Relacion bidireciconal
+    // Relacion bidireciconal (no crea una tabla, si no un campo en Invoice con client_id, al exitir un JoinColumn)
     // ClIENT ----* INVOICES
-    @OneToMany(mappedBy = "client")
+    //@OneToMany(mappedBy = "client")
+    @OneToMany(mappedBy = "client",orphanRemoval = true,cascade = CascadeType.ALL)
     @Builder.Default
     public List<Invoice> invoices = new ArrayList<>();
 
