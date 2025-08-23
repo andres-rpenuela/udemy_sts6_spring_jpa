@@ -28,20 +28,20 @@ public class InitDataRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // ### EXAMPLE ManyToOne() (Bidireccional) ###
-        //manyToOne();
+        manyToOne();
         //manyToOneAboutAClientExist();
 
-        // ### EXAMPLE OneToMany() ###
+        // ### EXAMPLE OneToMany() (Unidreccional) ###
         //oneToMany();
         //oneToManyAboutAClientExist();
 
-        // Example remove OneToMany(casacade= Cascade.All )
+        // ### EXAMPLE remove OneToMany(casacade= Cascade.All )
         //oneToManyAddressesShared(); // Metodo no permteidio, relación 1 <-> N
-        removeInOneToMany();
+        //removeInOneToMany();
     }
 
     /**
-     * Ejemplo de codificaicon "ManyToOne"
+     * Ejemplo de codificaicon "ManyToOne" (bidireccional)
      * Crea un cliente nuevo y le asocia una factura nueva
      */
     @Transactional
@@ -54,14 +54,59 @@ public class InitDataRunner implements CommandLineRunner {
         Invoice invoice = Invoice.builder().amount(BigDecimal.valueOf(10000)).client(client).build();
         Invoice invoice2 = invoiceRepository.save(invoice);
 
-        // son el miso objeto, y ambos tiene el id
-        // lo que indica que "save(entity)", modifica el parametro de entrada
-        System.out.println(invoice);  //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
-        System.out.println(invoice2); //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
+        // ------------------------------------------------------
+        // 📘 EJEMPLO: Comportamiento de save() y relaciones OneToMany
+        // ------------------------------------------------------
+
+        // ✅ Ambos objetos (invoice e invoice2) son el MISMO objeto en memoria.
+        // Esto se debe a que "save(entity)" devuelve la entidad administrada por el contexto de persistencia.
+        // Es decir, modifica el objeto pasado como parámetro y le asigna el ID generado.
+        System.out.println(invoice);
+        // Ejemplo salida: Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='SANCHEZ'}}
+        System.out.println("invoice2 == invoice: " + invoice2.equals(invoice));
+            // true → porque apuntan a la misma entidad administrada por JPA.
+
+
+        // ✅ Relación OneToMany entre Client → Invoice
+        System.out.println("Facturas del cliente: " + client.getName());
+        // IMPORTANTE: no se hace client.setInvoices(invoice).
+        // Por eso, el objeto "client" todavía NO tiene las facturas asociadas en memoria,
+        // aunque en BBDD sí que se haya guardado la relación.
+
+        System.out.println("Del objeto client en memoria (ANTES de hacer un find): ");
+        client.getInvoices().forEach(System.out::println);
+        // 🔴 Vacío → no se ha refrescado desde BBDD, la lista está desincronizada.
+
+
+        // ✅ Ahora consultamos el cliente en la base de datos
+        System.out.println("Del objeto client en BBDD (usando find): ");
+        clientRepository.findAll().stream()
+                .filter(result -> client.getName().equals(result.getName()))
+                .findFirst()
+                .map(Client::getInvoices)
+                .get()
+                .forEach(System.out::println);
+        // Aquí SÍ aparecen las facturas, porque el objeto viene desde la BBDD con la relación cargada.
+
+
+    // ✅ Revisamos nuevamente el objeto "client" en memoria (después del find).
+        System.out.println("Del objeto client en memoria (DESPUÉS de hacer un find, sin hacer setInvoices()): ");
+        client.getInvoices().forEach(System.out::println);
+    // 🔴 Sigue vacío → porque nunca se reasignó client.setInvoices().
+    // El objeto en memoria está desincronizado respecto al estado en la BBDD.
+
+
+    // ✅ Finalmente, si asignamos manualmente la relación en memoria:
+        client.setInvoices(Arrays.asList(invoice));
+
+        System.out.println("Del objeto client en memoria (tras hacer setInvoices() manualmente): ");
+        client.getInvoices().forEach(System.out::println);
+    // ✅ Ahora sí muestra la factura, porque se forzó la asignación en la entidad en memoria.
+
     }
 
     /**
-     * Ejemplo de codificaicon "ManyToOne"
+     * Ejemplo de codificaicon "ManyToOne" (bidireccional)
      * Busca un clinete existente en la BBDD y le asocia una factura nueva
      */
     @Transactional
@@ -123,7 +168,7 @@ public class InitDataRunner implements CommandLineRunner {
      * Método no permitido,
      * por que una un cliente puede tener muchas direcciones, pero una direcicón solo un cliente
      * entonces es una relación 1 <-> N, no de N <-> N
-      */
+     */
 //    @Transactional
 //    public void oneToManyAddressesShared(){// Requiere comentar:             //,uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow am Address in more one Client
 //
