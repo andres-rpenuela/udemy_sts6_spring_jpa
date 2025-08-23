@@ -59,27 +59,27 @@ public class Person {
 
 Marca la clase como entidad JPA.
 
-```java
+<code>
 @Entity
-public class Person { ... }
-```
+public class Person { /*...*/ }
+</code>
 
 ### 🔹 @Table
 
 Permite personalizar el nombre de la tabla.
 
-```java
+<code>
 @Table(name = "persons")
-```
+</code>
 
 ### 🔹 @Id
 
 Define el campo como clave primaria.
 
-```java
+<code>
 @Id
 private Long id;
-```
+</code>
 
 ### 🔹 @GeneratedValue
 
@@ -219,13 +219,77 @@ Las anotaciones de Hibernate como @CurrentTimestamp, @CreationTimestamp y @Updat
 
 ### @OneToOne
 
-Una persona tiene un solo pasaporte.
+Una relación @OneToOne indica que una entidad se asocia con otra entidad de forma única.
+
+Cada instancia de la primera entidad tiene exactamente una instancia de la segunda y viceversa.
+
+> Ejemplo típico: User y UserProfile, Cliente y DireccionPrincipal, Pasaporte
+
+
+* En JPA, una de las entidades debe ser el “dueño” de la relación.
+* La entidad dueña contiene la columna de la clave foránea (@JoinColumn).
+* La otra entidad usa mappedBy para indicar que la relación es inversa (_oneToOne_ bidireccional) (opcional)
+
+Ejemplo de relacion Unidireccional
 
 ```java
+// Una persona tiene un solo pasaporte. Unidireccional
 @OneToOne
 @JoinColumn(name = "passport_id")
 private Passport passport;
 ```
+
+Ejemplo de relacion Bidireccional
+
+```java
+@Entity
+public class Client {
+
+    @Id @GeneratedValue
+    private Long id;
+    private String name;
+
+    @OneToOne(mappedBy = "client")
+    private ClientDetails clientDetails
+    
+}
+```
+
+```java
+public class ClientDetails {
+
+    @Id   @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private boolean premium;
+    private Integer points;
+
+    // Propietario de la relación
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "client_id") // FK en ClientDetails
+    private Client client;
+}
+```
+#### Tipos de mapeo
+* Relación compartida (Foreign key en una entidad)
+    * Como en el ejemplo anterior.
+    * Client tiene la FK address_id.
+* Tabla intermedia
+    * Similar a @ManyToMany, pero rara vez se usa.
+    * Se puede crear con @JoinTable si se quiere desacoplar las tablas.
+
+#### Buenas practicas
+1. Siempre definir claramente quién es el propietario de la relación.
+2. Para evitar errores de null o inconsistencias, siempre mantener consistencia bidireccional:
+```java
+public void setMainAddress(Address address) {
+    this.mainAddress = address;
+    if (address != null) {
+        address.setClient(this);
+    }
+}
+```
+3. Evitar @OneToOne con colecciones (List o Set), para no confundir con @OneToMany.
+4. Ideal para entidades que siempre deben existir juntas o con relación 1:1 estricta.
 
 ### @OneToMany / @ManyToOne
 

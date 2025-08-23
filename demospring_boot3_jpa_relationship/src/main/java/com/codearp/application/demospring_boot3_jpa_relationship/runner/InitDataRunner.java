@@ -2,8 +2,10 @@ package com.codearp.application.demospring_boot3_jpa_relationship.runner;
 
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Address;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Client;
+import com.codearp.application.demospring_boot3_jpa_relationship.domains.ClientDetails;
 import com.codearp.application.demospring_boot3_jpa_relationship.domains.Invoice;
 import com.codearp.application.demospring_boot3_jpa_relationship.repositories.AddressRepository;
+import com.codearp.application.demospring_boot3_jpa_relationship.repositories.ClientDetailsRepository;
 import com.codearp.application.demospring_boot3_jpa_relationship.repositories.ClientRepository;
 import com.codearp.application.demospring_boot3_jpa_relationship.repositories.InvoiceRepository;
 import lombok.AllArgsConstructor;
@@ -26,6 +28,7 @@ public class InitDataRunner implements CommandLineRunner {
     private final InvoiceRepository invoiceRepository;
     private final AddressRepository addressRepository;
 
+    private final ClientDetailsRepository clientDetailsRepository;
     @Override
     public void run(String... args) throws Exception {
         // ### EXAMPLE ManyToOne() (Bidireccional) ###
@@ -42,7 +45,10 @@ public class InitDataRunner implements CommandLineRunner {
         //removeInOneToMany();
 
         // ### EXAMPLE remove OneToMany bidireccional
-        removeInvoiceBidireccionalFindById();
+        //removeInvoiceBidireccionalFindById();
+
+        // ### EXAMPLE onetoone
+        exampleOneToOne();
     }
 
     /**
@@ -372,4 +378,17 @@ public class InitDataRunner implements CommandLineRunner {
         clientRepository.findById(3L).map(Client::getInvoices).stream().forEach(System.out::println);
     }
 
+    /**
+     * Ejemplo OnetOne
+     */
+    @Transactional
+    protected void exampleOneToOne(){
+        Client client = Client.builder().name("Test").lastName("lastName").build();
+        ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).client(client).build();
+        clientRepository.save(client);
+        clientDetailsRepository.save(clientDetails);
+
+        System.out.println(clientDetails);
+
+    }
 }
