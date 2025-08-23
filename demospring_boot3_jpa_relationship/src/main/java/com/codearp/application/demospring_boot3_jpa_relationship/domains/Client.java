@@ -2,10 +2,42 @@ package com.codearp.application.demospring_boot3_jpa_relationship.domains;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+/**
+ * <code>
+ * SELECT DISTINCT c FROM Client c
+ * LEFT JOIN c.invoices
+ * LEFT JOIN c.addresses
+ * WHERE c.id in :ids
+ * </code>
+ * Qué pasa:
+ * <ul>
+ *     <li>Hibernate no carga las colecciones inmediatamente.</li>
+ *     <li>Las colecciones (invoices y addresses) siguen siendo lazy.</li>
+ *     <li>Al acceder a c.getInvoices() o c.getAddresses(), Hibernate ejecuta queries adicionales (N+1 problem si muchos clientes).</li>
+ *     <li>La query principal solo devuelve los Client distintos.</li>
+ * </ul>
+ *
+ * Pero se puede usar FETH
+ *
+ */
+@NamedQueries({
+        @NamedQuery( // usar set, o OrderColum para evitar problmas si son Lista
+                name = "Client.findWithInvoicesAndAddresses",
+                query = "SELECT DISTINCT c FROM Client c left join fetch c.invoices left join fetch c.addresses WHERE c.id = :id"
+        ),
+
+        @NamedQuery(
+                name = "Client.findInWithInvoicesAndAddresses", // hiberante hace el join internamente
+                query = "SELECT DISTINCT c FROM Client c left join c.invoices WHERE c.id in :ids"
+        )
+})
+
 
 @Entity
 @Table(name="CLIENTS")
@@ -28,6 +60,8 @@ public class Client {
     //@OneToMany(mappedBy = "client")
     @OneToMany(mappedBy = "client",orphanRemoval = true,cascade = CascadeType.ALL)
     @Builder.Default
+    //@OrderColumn(name="invoices_order") // solucion 3 de org.hibernate.loader.MultipleBagFetchException, crea una columna en INVOICES
+    @BatchSize(size = 10) // Si se usa Join en lugar de JOIN FETCH
     public List<Invoice> invoices = new ArrayList<>();
 
     // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no eixte una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
@@ -48,6 +82,8 @@ public class Client {
             ,uniqueConstraints = @UniqueConstraint(columnNames = {"address_id"}) // Not allow am Address in more one Client (reforzar el uso de orphanRemoval = true)
     )
     @Builder.Default
+    @OrderColumn(name="address_order") // solucion 3 de org.hibernate.loader.MultipleBagFetchException, crea una columna en en la tabla addresses o clients_addresses
+    @BatchSize(size = 10) // para Join sobre relaciones Lazy, carga en memoria de X en X cuando se hace consultas con in () y se accede a client.getAddress y es de tipo List
     public List<Address> addresses = new ArrayList<>();
 
     @Override

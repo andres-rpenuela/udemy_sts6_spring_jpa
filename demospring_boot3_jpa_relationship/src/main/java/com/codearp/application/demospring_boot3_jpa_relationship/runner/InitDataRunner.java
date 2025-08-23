@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -29,7 +30,8 @@ public class InitDataRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // ### EXAMPLE ManyToOne() (Bidireccional) ###
         //manyToOne();
-        manyToOneAboutAClientExist();
+        //manyToOneAboutAClientExist();
+        manyToOneAboutAClientExistJoinProperties();
 
         // ### EXAMPLE OneToMany() (Unidreccional) ###
         //oneToMany();
@@ -113,7 +115,9 @@ public class InitDataRunner implements CommandLineRunner {
     protected void manyToOneAboutAClientExist() {
         // 1️⃣ Recuperar un cliente existente de la base de datos
         // Esto devuelve un objeto Managed dentro de la sesión de Hibernate
-        Client client = clientRepository.findById(1L).get();
+        // Client client = clientRepository.findById(1L).get(); // puede dar problemas de Lazy
+        //Client client = clientRepository.finOneWithInvoices(1L).get(); // devuevle cliente con facturas
+        Client client = clientRepository.findOne(1L).get(); // devuevle cliente con direcciones y facturas
 
         // 2️⃣ Crear facturas y asignarlas directamente al cliente
         // La relación se establece asignando el cliente a la factura
@@ -288,6 +292,47 @@ public class InitDataRunner implements CommandLineRunner {
         // Ok remove client + address
         //clientRepository.deleteById(3L);
 
+    }
+
+    /**
+     * Diferencia entre JOIN y JOIN FETCH:
+     *
+     * - JOIN: realiza la consulta al cliente, pero las colecciones (invoices, addresses) se cargan
+     *   cuando se accede a ellas -> ejecuta queries adicionales.
+     *
+     * - JOIN FETCH: trae cliente y colecciones en una sola consulta. Evita N+1, pero puede
+     *   provocar MultipleBagFetchException si se aplican varios fetch a List.
+     */
+    @Transactional
+    public void manyToOneAboutAClientExistJoinProperties() {
+        // Consulta cliente con joins
+        Client client = clientRepository.findOne(3L).get();
+
+        // Acceso a colecciones con JOIN (lazy -> dispara queries adicionales)
+        client.getInvoices().forEach(System.out::println);
+
+        // Crear nuevas facturas y asociarlas al cliente
+        Invoice invoice1 = Invoice.builder().amount(BigDecimal.valueOf(20000)).build();
+        Invoice invoice2 = Invoice.builder().amount(BigDecimal.valueOf(30000)).build();
+        Invoice invoice3 = Invoice.builder().amount(BigDecimal.valueOf(30000)).build();
+        Invoice invoice4 = Invoice.builder().amount(BigDecimal.valueOf(30000)).build();
+        Invoice invoice5 = Invoice.builder().amount(BigDecimal.valueOf(30000)).build();
+
+
+        // addInvoice hace dos cosas:
+        // 1. Agrega la factura a la lista de facturas del cliente
+        // 2. Asigna el cliente a la factura (relación bidireccional)
+        client.addInvoice(invoice1).addInvoice(invoice2).addInvoice(invoice3).addInvoice(invoice4).addInvoice(invoice5);
+
+        clientRepository.save(client);
+
+
+        client = clientRepository.findOne(3L).get();
+        client.getInvoices().forEach(System.out::println);
+
+        // Prueba el @BatSize
+        List<Client> clients = clientRepository.findInLazy(List.of(1L,2L,3L));
+        clients.stream().map(Client::getInvoices).forEach(System.out::println);
     }
 
 }
