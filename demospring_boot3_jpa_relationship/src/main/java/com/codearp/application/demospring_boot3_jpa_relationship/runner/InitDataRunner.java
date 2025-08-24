@@ -383,12 +383,34 @@ public class InitDataRunner implements CommandLineRunner {
      */
     @Transactional
     protected void exampleOneToOne(){
-        Client client = Client.builder().name("Test").lastName("lastName").build();
-        ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).client(client).build();
-        clientRepository.save(client);
+        // ### Ejemplo si:
+        //  @OneToOne
+        //    @ToString.Exclude
+        //    private Client client;
+        // Esta en el ClientDetails y no en Client (unidireccional)
+
+        //Client client = Client.builder().name("Test").lastName("lastName").build();
+        //ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).client(client).build();
+        //clientRepository.save(client);
+        //clientDetailsRepository.save(clientDetails);
+
+        //System.out.println(clientDetails);
+        //System.out.println(clientDetails.getClient());
+
+        // ### Ejemplo si:
+        //  @OneToOne
+        //    @ToString.Exclude
+        //    private Client client;
+        // Esta en el Client y no en ClientDetails (unidireccional)
+
+
+        ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).build();
+        Client client = Client.builder().name("Test").lastName("lastName").clientDetails(clientDetails).build();
         clientDetailsRepository.save(clientDetails);
+        clientRepository.save(client);
 
         System.out.println(clientDetails);
+        System.out.println(client.getClientDetails());
 
     }
 }

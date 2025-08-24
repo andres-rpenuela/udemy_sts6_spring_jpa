@@ -18,7 +18,7 @@ public class ClientDetails {
     private boolean premium;
     private Integer points;
 
-    @OneToOne
-    @ToString.Exclude
-    private Client client;
+//    @OneToOne
+//    @ToString.Exclude
+//    private Client client;
 }
