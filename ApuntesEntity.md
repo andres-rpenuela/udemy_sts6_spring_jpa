@@ -1,5 +1,58 @@
 # 📘 Apuntes: @Entity y anotaciones básicas en JPA/Hibernate
 
+# 📑 Índice general
+
+## Parte I – Entidades y anotaciones JPA/Hibernate
+1. [¿Qué es @Entity?](#1-qué-es-entity)  
+2. [Requisitos de una entidad JPA](#2-requisitos-de-una-entidad-jpa)  
+3. [Anotaciones básicas](#3-anotaciones-básicas)  
+   - [@Entity](#-entity)  
+   - [@Table](#-table)  
+   - [@Id](#-id)  
+   - [@GeneratedValue](#-generatedvalue)  
+   - [@Column](#-column)  
+   - [@Transient](#-transient)  
+   - [@Lob](#-lob)  
+   - [@Enumerated](#-enumerated)  
+   - [@Temporal](#-temporal)  
+   - [@DateTimeFormat](#-datetimeformat)  
+   - [@CreationTimestamp y @UpdateTimestamp](#-creationtimestamp-y-updatetimestamp)  
+4. [Relaciones entre entidades](#4-relaciones-entre-entidades)  
+   - [@OneToOne](#-onetoone)  
+   - [@OneToMany / @ManyToOne](#-onetomany--manytoone)  
+   - [@ManyToMany](#-manytomany)  
+   - [@JoinColumn](#-joincolumn)  
+   - [@JoinTable](#-jointable)  
+   - [Excepción UnsupportedOperationException](#excepción-unsupportedoperationexception)  
+5. [Estrategias de herencia en JPA](#5-estrategias-de-herencia-en-jpa)  
+6. [Embebidos con @Embeddable y @Embedded](#6-embebidos-con-embeddable-y-embedded)  
+
+---
+
+## Parte II – Ciclo de vida y callbacks en JPA
+1. [Ciclo de vida de una entidad en JPA](#1-ciclo-de-vida-de-una-entidad-en-jpa)  
+   - Transient  
+   - Managed  
+   - Detached  
+   - Removed  
+2. [Anotaciones de ciclo de vida](#2-anotaciones-de-ciclo-de-vida)  
+   - @PrePersist / @PostPersist  
+   - @PreUpdate / @PostUpdate  
+   - @PreRemove / @PostRemove  
+   - @PostLoad  
+3. [Ejemplo completo](#3-ejemplo-completo)
+
+
+> ℹ️ **Nota adicional**: Valores *fetch* por defecto en JPA/Hibernate  
+> - `@OneToOne`: **EAGER** (recomendado cambiar a LAZY cuando sea posible).  
+> - `@ManyToOne`: **EAGER**.  
+> - `@OneToMany`: **LAZY**.  
+> - `@ManyToMany`: **LAZY**.  
+
+---
+
+# 📘 Apuntes: @Entity y anotaciones básicas en JPA/Hibernate
+
 ## Índice
 1. [¿Qué es @Entity?](#qué-es-entity)  
 2. [Requisitos de una entidad JPA](#requisitos-de-una-entidad-jpa)  
@@ -89,6 +142,7 @@ Especifica cómo se genera la clave primaria.
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private Long id;
+``` 
 ```
 
 Tipos de estrategias:
@@ -103,8 +157,8 @@ Tipos de estrategias:
 Configura detalles de una columna.
 
 ```java
-@Column(name = "progaming_language", nullable = false, length = 100)
-private String programingLanguage;
+@Column(name = "programming_language", nullable = false, length = 100)
+private String programmingLanguage;
 ```
 
 ### 🔹 @Transient
@@ -223,7 +277,7 @@ Una relación @OneToOne indica que una entidad se asocia con otra entidad de for
 
 Cada instancia de la primera entidad tiene exactamente una instancia de la segunda y viceversa.
 
-Por defecto el fecth es EAGER.
+Por defecto el fetch es EAGER.
 
 > Ejemplo típico: User y UserProfile, Cliente y DireccionPrincipal, Pasaporte
 
@@ -232,7 +286,7 @@ Por defecto el fecth es EAGER.
 * La entidad dueña contiene la columna de la clave foránea (@JoinColumn).
 * La otra entidad usa mappedBy para indicar que la relación es inversa (_oneToOne_ bidireccional) (opcional)
 
-Ejemplo de relacion Unidireccional
+Ejemplo de relación Unidireccional
 
 ```java
 // Una persona tiene un solo pasaporte. Unidireccional
@@ -241,7 +295,7 @@ Ejemplo de relacion Unidireccional
 private Passport passport;
 ```
 
-Ejemplo de relacion Bidireccional
+Ejemplo de relación Bidireccional
 
 ```java
 @Entity
@@ -349,6 +403,7 @@ private Person person;
 ```
 
 Resumen gráfico:
+
 ```
  Person (id) 1 --- * Book (id, person_id)
 
@@ -356,7 +411,7 @@ Resumen gráfico:
 * Person.books = lado inverso (@OneToMany(mappedBy="person")).
 ```
 
-En JPA, cuando defines una relación bidireccional, hay un dueño (**owing side**) de la relación (_el que tiene la FK en la tabla_) y un lado inverso (_mappedBy_) que solo refleja la relación.
+En JPA, cuando defines una relación bidireccional, hay un dueño (**owning side**) de la relación (_el que tiene la FK en la tabla_) y un lado inverso (_mappedBy_) que solo refleja la relación.
 
 * Dueño (owning side) → el que tiene la FK (@ManyToOne).
 * Inverso (mappedBy) → el otro lado, que solo “mapea” la relación (@OneToMany(mappedBy=...)).
@@ -376,7 +431,7 @@ public class Person {
 }
 ```
 
-El signficado desglosado sería:
+El significado desglosado sería:
 * **mappedBy** indica qué atributo en la otra entidad es el dueño de la relación.
 * _"person"_ se refiere al nombre del campo en _Book_ que tiene la anotación @ManyToOne.
 
@@ -422,7 +477,7 @@ private Person person;
 >       private Long id;
 >       private String name;
 >
->       // ya no se usa `mappedBy`, no existe el cmapo en Book   
+>       // ya no se usa `mappedBy`, no existe el campo en Book   
 >       @OneToMany
 >       @JoinColumn(name = "person_id") // FK en BOOK
 >       private List<Book> books;
@@ -437,7 +492,7 @@ private Person person;
 > ```
 > En ese caso, la relación sería unidireccional (solo Person sabe sus Book), pero no puedes navegar desde Book hacia Person, creando Hibernate crea la FK person_id en la tabla BOOK.
 
-#### Ejemplo de codificaicón `ManyToOne`
+#### Ejemplo de codificación `ManyToOne`
 
 ```java
 @Transactional
@@ -450,8 +505,8 @@ private Person person;
         Invoice invoice = Invoice.builder().amount(BigDecimal.valueOf(10000)).client(client).build();
         Invoice invoice2 = invoiceRepository.save(invoice);
 
-        // son el miso objeto, y ambos tiene el id
-        // lo que indica que "save(entity)", modifica el parametro de entrada
+        // son el mismo objeto, y ambos tiene el id
+        // lo que indica que "save(entity)", modifica el parámetro de entrada
         System.out.println(invoice);  //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
         System.out.println(invoice2); //Invoice{id=1, description='null', amount=10000, client={id=4, name='Pedro', lastName='sANCHEZ'}}
     }
@@ -475,9 +530,9 @@ Ejemplo:
 ```java
 // client.java
 
-    // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no eixte una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
+    // si no se mapped a un field de Address de tipo Cliente o no se usa JoinColum (no existe una fk), entonces, crea una tabla CLIENT_ADDRESS con las relaciones
     // CLIENT ----* ADDRESSES
-    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true)`// crea una tabla intermedia
+    @OneToMany(cascade = {CascadeType.ALL}, orphanRemoval = true) // crea una tabla intermedia
     //@OneToMany(mappedBy = "client") // debe existir el Cliente client y debe ser un @ManyToOne
     //@JoinColumn(name = "client_id") // crea una fk client_id en ADDRESSES, si neceisada de crar client.
     private List<Address> addresses;
@@ -497,7 +552,7 @@ Ejemplo:
 > - @JoinColumn(name = "...")
 > → Define la FK directamente en la tabla hija.
 
-##### 📌 Consieración sobre `@OneToMany` y Lazy Loading en Hibernate/Spring Data JPA
+##### 📌 Consideración sobre `@OneToMany` y Lazy Loading en Hibernate/Spring Data JPA
 
 ###### 1. Comportamiento por defecto
 - En JPA/Hibernate, **`@OneToMany` es LAZY por defecto**:
@@ -516,16 +571,16 @@ private List<Address> addresses;
 
 * Acceder a una colección lazy **fuera de la sesión** provoca:
 
-```
-org.hibernate.LazyInitializationException: could not initialize proxy - no Session
-```
+    ```bash
+    org.hibernate.LazyInitializationException: could not initialize proxy - no Session
+    ```
 
 * Ejemplo típico:
 
-```java
-Client client = clientRepository.findById(3L).orElseThrow();
-List<Address> addresses = client.getAddresses(); // Falla si fuera de la sesión
-```
+    ```java
+    Client client = clientRepository.findById(3L).orElseThrow();
+    List<Address> addresses = client.getAddresses(); // Falla si fuera de la sesión
+    ```
 
 Este problema es muy común que se de en aplicaiocnes de consola que usan jpa
 
@@ -536,15 +591,16 @@ Este problema es muy común que se de en aplicaiocnes de consola que usan jpa
 // operation allow, because remove use in client
 // but error: ailed to lazily initialize a collection of role: com.codearp.application.demospring_boot3_jpa_relationship.domains.Client.addresses
 // NOTA:
-// ESTE ERROR NO PASA EN UNA APLICACIÓN WEB SI SE ANOTA CON TRANSANCIONAL Y NO SE CIERRA LA SESIÓN
-// PERO EN UNA DE CONSOLA (ESTAMOS EN EL CONTEXTO COMMANLINERUNNER SI PASA (TRATA CADA OPERACIÓN DE FORMA ATÓMICA)
+// ESTE ERROR NO PASA EN UNA APLICACIÓN WEB SI SE ANOTA CON @Transactional Y NO SE CIERRA LA SESIÓN
+// PERO EN UNA DE CONSOLA (ESTAMOS EN EL CONTEXTO CommandLineRunner SI PASA (TRATA CADA OPERACIÓN DE FORMA ATÓMICA)
 // PARA SOLUCIONARLO HEMOS USADO: spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
 clientRepository.findById(3L).ifPresent( client -> {
     // el get es otra consulta
     client.getAddresses().removeFirst();
     clientRepository.save(client);
 });
-```        
+``` 
+```       
 
 ---
 
@@ -675,7 +731,7 @@ client.getAddresses().add(address);
 ```
 ##### 7. Operaciones de cascada.
 
-> Se aconsjea que las entidades implemente los méotods Equals & hasCode, que son usados para comparar instancias de este tipo en las colleciones.
+> Se aconsjea que las entidades implemente los métodos Equals & hasCode, que son usados para comparar instancias de este tipo en las colecciones.
 
 Ejemplo común:
 
@@ -913,7 +969,7 @@ Esto carga el estudiante y todos sus cursos en una sola consulta.
 )
 ```
 
-### Excepción "UnSupportedOperationExeption".
+### Excepción "UnsupportedOperationException".
 
 En el **contexto de JPA/Hibernate** ocurre algo importante:
 
@@ -922,7 +978,7 @@ En el **contexto de JPA/Hibernate** ocurre algo importante:
     - Para manejar cambios en cascada (cascade = ALL).
     - Para realizar orphanRemoval (orphanRemoval = true).
 
-2. Si usas *Collecitons.of(...)* o *Collections.unmodifiableList(...)* como atributo de relación, **Hibernate** fallará porque necesita hacer `.add()` o `.remove()` al sincronizar los datos, y lanzará **UnsupportedOperationException**
+2. Si usas *List.of(...)* o *Collections.unmodifiableList(...)* como atributo de relación, **Hibernate** fallará porque necesita hacer `.add()` o `.remove()` al sincronizar los datos, y lanzará **UnsupportedOperationException**
 
 Ejemplo:
 ```java
@@ -1122,6 +1178,7 @@ public class Course {
     private List<Student> students = new ArrayList<>();
 }
 ```
+```
 
 **Resultado en BD:**
 
@@ -1161,6 +1218,7 @@ public class Address {
     private String street;
 }
 ```
+
 
 **Explicación:**
 
