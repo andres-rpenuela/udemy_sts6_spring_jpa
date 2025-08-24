@@ -1,13 +1,8 @@
 package com.codearp.application.demospring_boot3_jpa_relationship.runner;
 
-import com.codearp.application.demospring_boot3_jpa_relationship.domains.Address;
-import com.codearp.application.demospring_boot3_jpa_relationship.domains.Client;
-import com.codearp.application.demospring_boot3_jpa_relationship.domains.ClientDetails;
-import com.codearp.application.demospring_boot3_jpa_relationship.domains.Invoice;
-import com.codearp.application.demospring_boot3_jpa_relationship.repositories.AddressRepository;
-import com.codearp.application.demospring_boot3_jpa_relationship.repositories.ClientDetailsRepository;
-import com.codearp.application.demospring_boot3_jpa_relationship.repositories.ClientRepository;
-import com.codearp.application.demospring_boot3_jpa_relationship.repositories.InvoiceRepository;
+import com.codearp.application.demospring_boot3_jpa_relationship.EnrollmentService;
+import com.codearp.application.demospring_boot3_jpa_relationship.domains.*;
+import com.codearp.application.demospring_boot3_jpa_relationship.repositories.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -17,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -53,8 +49,11 @@ public class InitDataRunner implements CommandLineRunner {
         //exampleOneToOneAboutClientExists();
 
         // Descomentar en ClientDetails el maapeby a Client
-        exampleOneToOneAboutClientExistsBidireccional();
-        removeClientDetailsOneToOneBidirecciontal();
+        //exampleOneToOneAboutClientExistsBidireccional();
+        //removeClientDetailsOneToOneBidirecciontal();
+
+        // Ejmplo ManyToMany
+        manyToMany();
     }
 
     /**
@@ -495,6 +494,42 @@ public class InitDataRunner implements CommandLineRunner {
         });
 
         clientRepository.findById(1L).ifPresent(System.out::println);
+
+    }
+
+    private final StudentRepository studentRepository;
+    private final CourseRepository courseRepository;
+
+    private final EnrollmentService enrollmentService;
+
+    @Transactional
+    public void manyToMany(){
+        Student student1 = Student.builder().name("Jano").lastName("Pura").build();
+        Student student2 = Student.builder().name("Erba").lastName("Doe").build();
+
+        Course course1 = Course.builder().name("Curso de java master").description("DEV Andres").build();
+        Course course2 = Course.builder().name("Curso de Spring Boot").description("DEV Andres").build();
+
+        courseRepository.saveAll(Arrays.asList(course1,course2));
+
+        enrollmentService.enroll(student1,course1);
+        enrollmentService.enroll(student1,course2);
+
+        enrollmentService.enroll(student2,course2);
+
+        studentRepository.save(student1);
+        studentRepository.save(student2);
+
+        System.out.println(student1);
+        System.out.println(student2);
+
+        System.out.println("Se elimina el Estudiante 1 del curso 1");
+        enrollmentService.unenroll(student1,course1);
+
+        System.out.println(student1);
+        System.out.println(student2);
+
+
 
     }
 }

@@ -913,6 +913,76 @@ Esto carga el estudiante y todos sus cursos en una sola consulta.
 )
 ```
 
+### Excepción "UnSupportedOperationExeption".
+
+En el **contexto de JPA/Hibernate** ocurre algo importante:
+
+1. **Hibernate** necesita** colecciones mutables**
+    - Para poder inyectar entidades cargadas desde la BD.
+    - Para manejar cambios en cascada (cascade = ALL).
+    - Para realizar orphanRemoval (orphanRemoval = true).
+
+2. Si usas *Collecitons.of(...)* o *Collections.unmodifiableList(...)* como atributo de relación, **Hibernate** fallará porque necesita hacer `.add()` o `.remove()` al sincronizar los datos, y lanzará **UnsupportedOperationException**
+
+Ejemplo:
+```java
+@OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<Invoice> invoices = List.of(); // inmutable ❌
+```
+
+La estrategia correcta es:
+
+1. Usar colecciones mutables internamente
+   ```java
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Invoice> invoices = new ArrayList<>();
+    ```
+2. Exponerlas inmutables en los getters, así proteges la colección de modificaciones externas:
+    ```java
+    public List<Invoice> getInvoices() {
+        return Collections.unmodifiableList(invoices);
+    }
+    ```
+3. Usar métodos de conveniencia dentro de la entidad, que trabajan sobre la colección mutable interna, para añadir elementos en la base de datos:
+    ```java
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Invoice> invoices = new ArrayList<>();
+
+    // Getter: solo lectura desde fuera
+    public List<Invoice> getInvoices() {
+        return Collections.unmodifiableList(invoices);
+    }
+
+    // Método de conveniencia para añadir
+    public Client addInvoice(Invoice invoice) {
+        this.invoices.add(invoice);       // modifica la lista interna
+        invoice.setClient(this);          // mantiene relación bidireccional
+        return this;
+    }
+
+    // Método de conveniencia para eliminar
+    public Client removeInvoice(Invoice invoice) {
+        this.invoices.remove(invoice);
+        invoice.setClient(null);
+        return this;
+    }
+    ```
+    
+Con esto:
+
+* Hibernate puede modificar la colección internamente (_sigue pudiendo mutar la lista cuando sincroniza datos_), al añadir o eliminar elementos a través de métodos explícitos (addInvoice / removeInvoice).
+* El resto de la aplicación no puede hacer .add() o .remove() directamente (_desde fuera, el consumidor no puede modificar directamente la colección `unmodifiableList`_)
+* Ventajas de colecciones inmutables en general
+    * Seguridad → Nadie puede modificar accidentalmente los datos.
+    * Hilos → Son seguras para compartir entre hilos (no necesitan sincronización).
+    * Simplifican el diseño → Evitan efectos colaterales.
+    * Consistencia → Garantiza que las relaciones bidireccionales estén siempre consistentes.
+
+Por tanto:
+- ❌ No usar colecciones inmutables directamente en entidades JPA → Hibernate necesita mutarlas.
+- ✅ Sí usarlas en DTOs o exposiciones externas → protegen contra modificaciones no deseadas.
+- ✅ Patrón recomendado: mutable internamente + inmutable en getters.
+- 
 ---
 
 ### @JoinColumn
