@@ -841,16 +841,76 @@ En resumen
 
 ### @ManyToMany
 
-Relación muchos a muchos con tabla intermedia.
+Una relación muchos a muchos implica que múltiples entidades de un lado pueden estar asociadas con múltiples entidades del otro.
+Ejemplo clásico:
+
+Un Estudiante puede estar inscrito en varios Cursos.
+
+Un Curso puede tener varios Estudiantes.
 
 ```java
-@ManyToMany
-@JoinTable(
-  name = "student_course",
-  joinColumns = @JoinColumn(name = "student_id"),
-  inverseJoinColumns = @JoinColumn(name = "course_id")
+@Entity
+@Table(name = "students")
+public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @ManyToMany
+    @JoinTable(
+        name = "students_courses", // tabla intermedia
+        joinColumns = @JoinColumn(name = "student_id"), // FK en la tabla intermedia hacia Student
+        inverseJoinColumns = @JoinColumn(name = "course_id") // FK hacia Course
+    )
+    private Set<Course> courses = new HashSet<>();
+}
+```
+
+```java
+@Entity
+@Table(name = "courses")
+public class Course {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+
+    @ManyToMany(mappedBy = "courses") // lado inverso
+    private Set<Student> students = new HashSet<>();
+}
+```
+#### Puntos de interés
+- Tabla intermedia: Hibernate crea una tabla de unión (students_courses) con las claves foráneas de ambos lados.
+- Propietario de la relación:
+- El lado que define el `@JoinTable` es el **dueño** de la relación.
+- El otro lado (_con mappedBy_) es el **inverso** y no gestiona las inserciones/updates.
+- Colecciones recomendadas:
+    - Usar Set → evita duplicados y el problema de bags.
+    - Usar List solo si necesitas un orden explícito (@OrderColumn).
+- Cascadas y eliminación:
+    - cascade = CascadeType.ALL en un @ManyToMany es peligroso ⚠️, porque puede intentar borrar entidades compartidas por otras relaciones.
+    - Normalmente no se usa orphanRemoval = true en @ManyToMany, ya que una entidad puede estar referenciada por múltiples padres.
+  
+#### Fetching y rendimiento
+- Por defecto, @ManyToMany es LAZY (mejor para rendimiento).
+- Si se necesita cargar con frecuencia, usar JOIN FETCH en queries específicas.
+- Para evitar N+1 queries:
+    - Usar @BatchSize(size = N) en la colección.
+    - O @Fetch(FetchMode.SUBSELECT) para cargar todas las colecciones en una sola subconsulta.
+
+#### Ejemplo de query con `JOIN FETCH
+
+Esto carga el estudiante y todos sus cursos en una sola consulta.
+```java
+@NamedQuery(
+    name = "Student.findWithCourses",
+    query = "SELECT DISTINCT s FROM Student s LEFT JOIN FETCH s.courses WHERE s.id = :id"
 )
-private List<Course> courses;
 ```
 
 ---
