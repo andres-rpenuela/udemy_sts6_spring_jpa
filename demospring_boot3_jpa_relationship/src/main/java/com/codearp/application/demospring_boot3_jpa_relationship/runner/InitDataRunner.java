@@ -49,6 +49,7 @@ public class InitDataRunner implements CommandLineRunner {
 
         // ### EXAMPLE onetoone
         exampleOneToOne();
+        exampleOneToOneAboutClientExists();
     }
 
     /**
@@ -413,4 +414,20 @@ public class InitDataRunner implements CommandLineRunner {
         System.out.println(client.getClientDetails());
 
     }
+
+    @Transactional
+    protected void exampleOneToOneAboutClientExists(){
+
+        clientRepository.findById(1L).ifPresent( client -> {
+            ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).build();
+            client.setClientDetails(clientDetails);
+            clientDetailsRepository.save(clientDetails);
+            clientRepository.save(client);
+        });
+
+        Client client = clientRepository.findById(1L).get();
+        System.out.println(client.getClientDetails());
+
+    }
+
 }
