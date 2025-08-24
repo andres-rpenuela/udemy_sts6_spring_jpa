@@ -4,19 +4,27 @@
 
 ## 📑 Índice
 
-1. [Introducción](#1-introducción)
-2. [Criteria API](#2-criteria-api)
-
-   * [Ventajas y desventajas](#ventajas-y-desventajas)
-   * [Ejemplos básicos](#ejemplos-básicos)
-3. [QueryDSL](#3-querydsl)
-
-   * [¿Qué es QueryDSL?](#qué-es-querydsl)
-   * [Dependencias en Spring Boot](#dependencias-en-spring-boot)
-   * [Generación de Q-classes](#generación-de-q-classes)
-   * [Ejemplos básicos](#ejemplos-básicos-querydsl)
-   * [Comparativa con Criteria API](#comparativa-con-criteria-api)
-4. [Buenas prácticas](#4-buenas-prácticas)
+- [📘 Apuntes: Criteria API y QueryDSL en Spring Boot](#-apuntes-criteria-api-y-querydsl-en-spring-boot)
+  - [📑 Índice](#-índice)
+  - [1. Introducción](#1-introducción)
+  - [2. Criteria API](#2-criteria-api)
+    - [Ventajas y desventajas](#ventajas-y-desventajas)
+    - [Ejemplos básicos](#ejemplos-básicos)
+  - [3. QueryDSL](#3-querydsl)
+    - [¿Qué es QueryDSL?](#qué-es-querydsl)
+    - [Dependencias en Spring Boot](#dependencias-en-spring-boot)
+    - [Generación de Q-classes](#generación-de-q-classes)
+    - [Ejemplos básicos (QueryDSL)](#ejemplos-básicos-querydsl)
+    - [Comparativa con Criteria API](#comparativa-con-criteria-api)
+  - [4. Buenas prácticas](#4-buenas-prácticas)
+- [📘 Integración de QueryDSL con JpaRepository en Spring Boot](#-integración-de-querydsl-con-jparepository-en-spring-boot)
+  - [1️⃣ Dependencias necesarias](#1️⃣-dependencias-necesarias)
+  - [2️⃣ Entidad de ejemplo](#2️⃣-entidad-de-ejemplo)
+  - [3️⃣ Repositorio base](#3️⃣-repositorio-base)
+  - [4️⃣ Interfaz personalizada](#4️⃣-interfaz-personalizada)
+  - [5️⃣ Implementación con QueryDSL](#5️⃣-implementación-con-querydsl)
+  - [6️⃣ Uso en un servicio](#6️⃣-uso-en-un-servicio)
+  - [7️⃣ Diferencia con `JpaRepository`](#7️⃣-diferencia-con-jparepository)
 
 ---
 
