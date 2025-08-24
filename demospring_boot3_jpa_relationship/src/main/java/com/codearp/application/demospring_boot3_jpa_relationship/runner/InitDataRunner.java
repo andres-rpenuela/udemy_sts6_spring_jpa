@@ -47,9 +47,14 @@ public class InitDataRunner implements CommandLineRunner {
         // ### EXAMPLE remove OneToMany bidireccional
         //removeInvoiceBidireccionalFindById();
 
-        // ### EXAMPLE onetoone
-        exampleOneToOne();
-        exampleOneToOneAboutClientExists();
+        // ### EXAMPLE oneToOne
+        // Comentar en ClientDetails el mappeby a Client
+        //exampleOneToOne();
+        //exampleOneToOneAboutClientExists();
+
+        // Descomentar en ClientDetails el maapeby a Client
+        exampleOneToOneAboutClientExistsBidireccional();
+        removeClientDetailsOneToOneBidirecciontal();
     }
 
     /**
@@ -407,7 +412,7 @@ public class InitDataRunner implements CommandLineRunner {
 
         ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).build();
         Client client = Client.builder().name("Test").lastName("lastName").clientDetails(clientDetails).build();
-        clientDetailsRepository.save(clientDetails);
+        //clientDetailsRepository.save(clientDetails); // Si client tiene el CascadeAll esto no se guarda ya
         clientRepository.save(client);
 
         System.out.println(clientDetails);
@@ -440,4 +445,56 @@ public class InitDataRunner implements CommandLineRunner {
          */
     }
 
+    @Transactional
+    protected void exampleOneToOneAboutClientExistsBidireccional(){
+
+        clientRepository.findById(1L).ifPresent( client -> {
+            // si no se usa el Cascade.ALL
+//            ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).build();
+//            client.setClientDetails(clientDetails);
+//            clientDetails.setClient(client);
+//
+//            clientDetailsRepository.save(clientDetails);
+//            clientRepository.save(client);
+
+            // si se usa el Cascae.ALL
+            ClientDetails clientDetails = ClientDetails.builder().points(1).premium(true).build();
+            client.addClientDetails(clientDetails);
+
+            clientRepository.save(client);
+        });
+
+        Client client = clientRepository.findById(1L).get();
+        System.out.println(client.getClientDetails());
+
+        /**
+         * Si ClientDeatils en CLient es Fetch.Lazy y esta comentado odesactivado la propiedad
+         * # ANTI-PATTER (NO RECOMENDABLE PARA PRODUCIÓN)
+         * #spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+         *
+         * Dara error :
+         * org.hibernate.LazyInitializationException: Could not initialize proxy [com.codearp.application.demospring_boot3_jpa_relationship.domains.ClientDetails#2] - no session
+         * Eso si estamos en contexto de Spring y en el bloque transaciconal, no dara error enste meodo, pero al estar
+         * en  contexto de CommandLineRunner, el findBYiD cierra la sessión y no se podrá obtener
+         */
+    }
+
+    /**
+     * Elimina ClientDetial pero No cliente
+     */
+    @Transactional
+    public void removeClientDetailsOneToOneBidirecciontal(){
+        clientRepository.findById(1L).ifPresent( client -> {
+
+            // si se usa el Cascae.ALL
+            ClientDetails clientDetails = client.getClientDetails();
+            client.removeClientDetails(clientDetails);
+
+            clientDetailsRepository.delete(clientDetails);
+
+        });
+
+        clientRepository.findById(1L).ifPresent(System.out::println);
+
+    }
 }

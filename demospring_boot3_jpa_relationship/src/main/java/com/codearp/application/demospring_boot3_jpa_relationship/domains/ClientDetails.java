@@ -21,4 +21,8 @@ public class ClientDetails {
 //    @OneToOne
 //    @ToString.Exclude
 //    private Client client;
+
+    // Bidireccional
+    @OneToOne(mappedBy = "clientDetails")
+    private Client client;
 }

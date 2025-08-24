@@ -88,8 +88,9 @@ public class Client {
     public List<Address> addresses = new ArrayList<>();
 
     // Esto dara error si no esta en el contexto
-    @OneToOne(fetch = FetchType.LAZY)
-    //@OneToOne
+    //@OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true) // recomendado para hacer el addClientDetails
+    @JoinColumn(name = "CLIENT_DETAILS_ID")
     private ClientDetails clientDetails; //Client tiene la foreng key
 
     @Override
@@ -153,6 +154,25 @@ public class Client {
 
         // 3️⃣ Retorna el mismo cliente para permitir encadenamiento de métodos
         // Ejemplo: client.removeInvoice(invoice1).removeInvoice(invoice2);
+        return this;
+    }
+
+
+    public Client addClientDetails(ClientDetails clientDetails){
+            clientDetails.setClient(this);
+            this.setClientDetails(clientDetails);
+
+            return this;
+    }
+
+    public Client removeClientDetails(ClientDetails clientDetails){
+        if(clientDetails==null || !clientDetails.equals( clientDetails.getClient() ) ){
+            return this;
+        }
+
+        clientDetails.setClient(null);
+        this.setClientDetails(null);
+
         return this;
     }
 }
