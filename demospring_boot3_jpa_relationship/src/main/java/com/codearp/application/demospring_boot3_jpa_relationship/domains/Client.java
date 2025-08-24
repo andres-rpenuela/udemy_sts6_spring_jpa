@@ -87,7 +87,9 @@ public class Client {
     @BatchSize(size = 10) // para Join sobre relaciones Lazy, carga en memoria de X en X cuando se hace consultas con in () y se accede a client.getAddress y es de tipo List
     public List<Address> addresses = new ArrayList<>();
 
-    @OneToOne
+    // Esto dara error si no esta en el contexto
+    @OneToOne(fetch = FetchType.LAZY)
+    //@OneToOne
     private ClientDetails clientDetails; //Client tiene la foreng key
 
     @Override

@@ -428,6 +428,16 @@ public class InitDataRunner implements CommandLineRunner {
         Client client = clientRepository.findById(1L).get();
         System.out.println(client.getClientDetails());
 
+        /**
+         * Si ClientDeatils en CLient es Fetch.Lazy y esta comentado odesactivado la propiedad
+         * # ANTI-PATTER (NO RECOMENDABLE PARA PRODUCIÓN)
+         * #spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+         *
+         * Dara error :
+         * org.hibernate.LazyInitializationException: Could not initialize proxy [com.codearp.application.demospring_boot3_jpa_relationship.domains.ClientDetails#2] - no session
+         * Eso si estamos en contexto de Spring y en el bloque transaciconal, no dara error enste meodo, pero al estar
+         * en  contexto de CommandLineRunner, el findBYiD cierra la sessión y no se podrá obtener
+         */
     }
 
 }

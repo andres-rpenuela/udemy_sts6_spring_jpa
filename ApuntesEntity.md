@@ -223,6 +223,8 @@ Una relación @OneToOne indica que una entidad se asocia con otra entidad de for
 
 Cada instancia de la primera entidad tiene exactamente una instancia de la segunda y viceversa.
 
+Por defecto el fecth es EAGER.
+
 > Ejemplo típico: User y UserProfile, Cliente y DireccionPrincipal, Pasaporte
 
 
@@ -294,6 +296,33 @@ public void setMainAddress(Address address) {
 ### @OneToMany / @ManyToOne
 
 **Relación uno a muchos / muchos a uno**.
+
+Aquí tienes una redacción más clara y técnica de tu nota, en estilo de documentación:
+
+---
+
+> **Notas sobre relaciones y rendimiento en JPA/Hibernate**
+>
+> * En las relaciones:
+>
+>   * **`@OneToMany`** → el *fetch type* por defecto es **LAZY**.
+>   * **`@ManyToOne`** → el *fetch type* por defecto es **EAGER**.
+> * Cuando las colecciones en una relación **`@OneToMany`** son de tipo `List` (y no `Set`), Hibernate las maneja internamente como **"bags"**.
+>
+>   * Esto provoca que si se usan varios `JOIN FETCH` sobre colecciones, se produzca la excepción:
+>
+>     ```
+>     org.hibernate.loader.MultipleBagFetchException: cannot simultaneously fetch multiple bags
+>     ```
+>   * Para resolverlo se recomienda:
+>
+>     * Usar `Set` en lugar de `List`.
+>     * O bien, anotar las colecciones con `@OrderColumn` o `@IndexColumn` para que Hibernate las trate de forma ordenada y no como "bags".
+> * En consultas que usan *fetch LAZY*, si además se aplica un `WHERE ... IN (:ids)` para filtrar entidades principales, Hibernate puede generar el **problema de N+1 queries** en las colecciones asociadas.
+>
+>   * Ejemplo: una query carga 10 clientes, y luego Hibernate dispara una consulta independiente para cada colección `invoices` o `addresses`.
+>   * Esto puede optimizarse con la anotación `@BatchSize(size = N)`, que indica a Hibernate que cargue colecciones en lotes, reduciendo el número total de queries.
+
 
 Ejemplo:
 - Una Persona puede tener muchos libros.
