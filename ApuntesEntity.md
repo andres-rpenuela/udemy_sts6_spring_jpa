@@ -982,7 +982,49 @@ Por tanto:
 - ❌ No usar colecciones inmutables directamente en entidades JPA → Hibernate necesita mutarlas.
 - ✅ Sí usarlas en DTOs o exposiciones externas → protegen contra modificaciones no deseadas.
 - ✅ Patrón recomendado: mutable internamente + inmutable en getters.
-- 
+
+#### Consulta para obtener el estudiante con un curso determinado
+
+```java
+// En el repositorio que gestiona la clase propietaria del JoinTable
+
+@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+// @JoinTable opcional, si no la defines Hibernate la crea automáticamente
+private Set<Course> courses = new HashSet<>();
+```
+
+- La tabla intermedia (_en tu caso, algo como students_courses_) no es una entidad propia.
+- Hibernate la crea y la gestiona automáticamente como una tabla de unión.
+- Ninguna clase Java la representa directamente (_a menos que uses un @Entity para modelarla_).
+- El "dueño" de la relación es la entidad que NO tiene el mappedBy.
+- En el ejemplo, Student es el propietario porque tiene la anotación @ManyToMany sin mappedBy. Eso significa:
+    - Cuando guardas un Student con cursos asignados, Hibernate inserta registros en la tabla students_courses.
+    - Si guardas un Course pero no está mapeado como propietario, Hibernate no toca la tabla intermedia.
+
+> Nota: 
+> Si necesitas manejar atributos adicionales en la relación (ejemplo: fecha de inscripción, nota, estado…), entonces sí creas una entidad intermedia, por ejmplo, `Enrollment` con dos `@ManyToOne`, y el resto de campos.
+> 
+> Así se ve´ria la tabla intermedia
+> ```java
+> @Entity
+> @Table(name = "enrollments")
+> public class Enrollment {
+> 
+>     @EmbeddedId
+>     private EnrollmentId id;
+> 
+>     @ManyToOne
+>     @MapsId("studentId")
+>     private Student student;
+> 
+>     @ManyToOne
+>     @MapsId("courseId")
+>     private Course course;
+> 
+>     private LocalDate enrollmentDate;
+>     private Double grade;
+> } 
+>```
 ---
 
 ### @JoinColumn
